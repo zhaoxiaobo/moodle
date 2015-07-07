@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Moodle frontpage.
+ * Founder Moodle frontpage.
  *
  * @package    core
  * @copyright  1999 onwards Martin Dougiamas (http://dougiamas.com)
