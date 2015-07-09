@@ -6,10 +6,10 @@ $CFG = new stdClass();
 
 $CFG->dbtype    = 'mysqli';
 $CFG->dblibrary = 'native';
-$CFG->dbhost    = '127.0.0.1';
+$CFG->dbhost    = '172.19.42.53';
 $CFG->dbname    = 'fdmoodle';
 $CFG->dbuser    = 'root';
-$CFG->dbpass    = 'ouyangyu';
+$CFG->dbpass    = 'root';
 $CFG->prefix    = 'mdl_';
 $CFG->dboptions = array (
   'dbpersist' => 0,

@@ -162,6 +162,7 @@
     }
 
     foreach (explode(',',$frontpagelayout) as $v) {
+
         switch ($v) {     /// Display the main part of the front page.
             case FRONTPAGENEWS:
                 if ($SITE->newsitems) { // Print forums only when needed
