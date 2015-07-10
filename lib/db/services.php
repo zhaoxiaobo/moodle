@@ -890,6 +890,14 @@ $functions = array(
         'type'        => 'write',
         'capabilities'=> 'moodle/calendar:manageentries', 'moodle/calendar:manageownentries', 'moodle/calendar:managegroupentries'
     ),
+
+    'local_get_verification_code' => array(
+        'classname'   => 'local_verification_external',
+        'methodname'  => 'get_verification_code',
+        'classpath'   => 'local/verification/externallib.php',
+        'description' => 'Return verification code',
+        'type'        => 'write',
+    ),
 );
 
 $services = array(
@@ -906,7 +914,10 @@ $services = array(
             'core_course_get_contents',
             'core_get_component_strings',
             'core_user_add_user_device',
-            'core_calendar_get_calendar_events'),
+            'core_user_get_users_by_id',
+            'core_user_update_users',            
+            'core_calendar_get_calendar_events',
+            'local_get_verification_code'),
         'enabled' => 0,
         'restrictedusers' => 0,
         'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,
