@@ -27,8 +27,28 @@ define('NO_MOODLE_COOKIES', true);
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 
-$username = required_param('username', PARAM_USERNAME);
-$password = required_param('password', PARAM_RAW);
+//$username = required_param('username', PARAM_USERNAME);
+//add by zxb 获取phone和password参数，根据参数不一样，采用不同的方式获取token
+$password = $phone = $username= '';
+if (isset($_POST["username"])) {
+    $username = $_POST["username"];
+} else if (isset($_GET["username"])) {
+    $username = $_GET["username"];
+}
+
+if (isset($_POST["password"])) {
+    $password = $_POST["password"];
+} else if (isset($_GET["password"])) {
+    $password = $_GET["password"];
+}
+
+if (isset($_POST["phone"])) {
+    $phone = $_POST["phone"];
+} else if (isset($_GET["phone"])) {
+    $phone = $_GET["phone"];
+}
+
+//$password = required_param('password', PARAM_RAW);
 $serviceshortname  = required_param('service',  PARAM_ALPHANUMEXT);
 
 echo $OUTPUT->header();
@@ -40,7 +60,18 @@ $username = trim(core_text::strtolower($username));
 if (is_restored_user($username)) {
     throw new moodle_exception('restoredaccountresetpassword', 'webservice');
 }
-$user = authenticate_user_login($username, $password);
+if(!$password && !$phone){
+    throw new moodle_exception('password and phone At least one', 'webservice');
+}
+if($password && !$username){
+    $username = required_param('username', PARAM_USERNAME);
+}
+
+if($password)
+    $user = authenticate_user_login($username, $password);
+else if($phone)
+    $user = $DB->get_record('user', array('phone2' => $phone, 'deleted' => 0));
+
 if (!empty($user)) {
 
     //Non admin can not authenticate if maintenance mode

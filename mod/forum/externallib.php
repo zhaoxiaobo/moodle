@@ -341,4 +341,348 @@ class mod_forum_external extends external_api {
             )
         );
     }
+
+    //add by zxb
+    /**
+     * Describes the parameters for get_forum_discussion_posts.
+     *
+     * @return external_external_function_parameters
+     * @since Moodle 2.7
+     */
+    public static function get_forum_discussion_posts_parameters() {
+        return new external_function_parameters (
+            array(
+                'discussionid' => new external_value(PARAM_INT, 'discussion ID', VALUE_REQUIRED),
+                'sortby' => new external_value(PARAM_ALPHA,
+                    'sort by this element: id, created or modified', VALUE_DEFAULT, 'created'),
+                'sortdirection' => new external_value(PARAM_ALPHA, 'sort direction: ASC or DESC', VALUE_DEFAULT, 'DESC')
+            )
+        );
+    }
+
+    /**
+     * Returns a list of forum posts for a discussion
+     *
+     * @param int $discussionid the post ids
+     * @param string $sortby sort by this element (id, created or modified)
+     * @param string $sortdirection sort direction: ASC or DESC
+     *
+     * @return array the forum post details
+     * @since Moodle 2.7
+     */
+    public static function get_forum_discussion_posts($discussionid, $sortby = "created", $sortdirection = "DESC") {
+        global $CFG, $DB, $USER;
+
+        $warnings = array();
+
+        // Validate the parameter.
+        $params = self::validate_parameters(self::get_forum_discussion_posts_parameters(),
+            array(
+                'discussionid' => $discussionid,
+                'sortby' => $sortby,
+                'sortdirection' => $sortdirection));
+
+        // Compact/extract functions are not recommended.
+        $discussionid   = $params['discussionid'];
+        $sortby         = $params['sortby'];
+        $sortdirection  = $params['sortdirection'];
+
+        $sortallowedvalues = array('id', 'created', 'modified');
+        if (!in_array($sortby, $sortallowedvalues)) {
+            throw new invalid_parameter_exception('Invalid value for sortby parameter (value: ' . $sortby . '),' .
+                'allowed values are: ' . implode(',', $sortallowedvalues));
+        }
+
+        $sortdirection = strtoupper($sortdirection);
+        $directionallowedvalues = array('ASC', 'DESC');
+        if (!in_array($sortdirection, $directionallowedvalues)) {
+            throw new invalid_parameter_exception('Invalid value for sortdirection parameter (value: ' . $sortdirection . '),' .
+                'allowed values are: ' . implode(',', $directionallowedvalues));
+        }
+
+        $discussion = $DB->get_record('forum_discussions', array('id' => $discussionid), '*', MUST_EXIST);
+        $forum = $DB->get_record('forum', array('id' => $discussion->forum), '*', MUST_EXIST);
+        $course = $DB->get_record('course', array('id' => $forum->course), '*', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+
+        // Validate the module context. It checks everything that affects the module visibility (including groupings, etc..).
+        $modcontext = context_module::instance($cm->id);
+        self::validate_context($modcontext);
+
+        // This require must be here, see mod/forum/discuss.php.
+        require_once($CFG->dirroot . "/mod/forum/lib.php");
+
+        // Check they have the view forum capability.
+        require_capability('mod/forum:viewdiscussion', $modcontext, null, true, 'noviewdiscussionspermission', 'forum');
+
+        if (! $post = forum_get_post_full($discussion->firstpost)) {
+            throw new moodle_exception('notexists', 'forum');
+        }
+
+        // This function check groups, qanda, timed discussions, etc.
+        if (!forum_user_can_see_post($forum, $discussion, $post, null, $cm)) {
+            throw new moodle_exception('noviewdiscussionspermission', 'forum');
+        }
+
+        $canviewfullname = has_capability('moodle/site:viewfullnames', $modcontext);
+
+        // We will add this field in the response.
+        $canreply = forum_user_can_post($forum, $discussion, $USER, $cm, $course, $modcontext);
+
+        $forumtracked = forum_tp_is_tracked($forum);
+
+        $sort = 'p.' . $sortby . ' ' . $sortdirection;
+        $posts = forum_get_all_discussion_posts($discussion->id, $sort, $forumtracked);
+        $description = array();
+        foreach ($posts as $pid => $post) {
+
+            if (!forum_user_can_see_post($forum, $discussion, $post, null, $cm)) {
+                $warning = array();
+                $warning['item'] = 'post';
+                $warning['itemid'] = $post->id;
+                $warning['warningcode'] = '1';
+                $warning['message'] = 'You can\'t see this post';
+                $warnings[] = $warning;
+                continue;
+            }
+
+            // Function forum_get_all_discussion_posts adds postread field.
+            // Note that the value returned can be a boolean or an integer. The WS expects a boolean.
+            if (empty($post->postread)) {
+                $posts[$pid]->postread = false;
+            } else {
+                $posts[$pid]->postread = true;
+            }
+
+            $posts[$pid]->canreply = $canreply;
+            if (!empty($posts[$pid]->children)) {
+                $posts[$pid]->children = array_keys($posts[$pid]->children);
+            } else {
+                $posts[$pid]->children = array();
+            }
+
+            $user = new stdclass();
+            $user->id = $post->userid;
+            $user = username_load_fields_from_object($user, $post);
+            $post->userfullname = fullname($user, $canviewfullname);
+
+            // We can have post written by users that are deleted. In this case, those users don't have a valid context.
+            $usercontext = context_user::instance($user->id, IGNORE_MISSING);
+            if ($usercontext) {
+                $post->userpictureurl = moodle_url::make_pluginfile_url($usercontext->id, 'user', 'icon', null, '/', 'f1')->out(false);
+            } else {
+                $post->userpictureurl = '';
+            }
+
+            // Rewrite embedded images URLs.
+            list($post->message, $post->messageformat) =
+                external_format_text($post->message, $post->messageformat, $modcontext->id, 'mod_forum', 'post', $post->id);
+
+            // List attachments.
+            if (!empty($post->attachment)) {
+                $post->attachments = array();
+
+                $fs = get_file_storage();
+                if ($files = $fs->get_area_files($modcontext->id, 'mod_forum', 'attachment', $post->id, "filename", false)) {
+                    foreach ($files as $file) {
+                        $filename = $file->get_filename();
+                        $fileurl = moodle_url::make_webservice_pluginfile_url(
+                                        $modcontext->id, 'mod_forum', 'attachment', $post->id, '/', $filename);
+
+                        $post->attachments[] = array(
+                            'filename' => $filename,
+                            'mimetype' => $file->get_mimetype(),
+                            'fileurl'  => $fileurl->out(false)
+                        );
+                    }
+                }
+            }
+            if ($post->parent == '0') {
+                $description = (array) $post;
+            }else{
+                $posts[$pid] = (array) $post;
+            }            
+        }
+        $result = array();
+        $result['posts'] = $posts;
+        $result['description'] = $description;
+        $result['warnings'] = $warnings;
+        return $result;
+    }
+
+    /**
+     * Describes the get_forum_discussion_posts return value.
+     *
+     * @return external_single_structure
+     * @since Moodle 2.7
+     */
+    public static function get_forum_discussion_posts_returns() {
+        return new external_single_structure(
+            array(
+                'posts' => new external_multiple_structure(
+                        new external_single_structure(
+                            array(
+                                'id' => new external_value(PARAM_INT, 'Post id'),
+                                'discussion' => new external_value(PARAM_INT, 'Discussion id'),
+                                'parent' => new external_value(PARAM_INT, 'Parent id'),
+                                'userid' => new external_value(PARAM_INT, 'User id'),
+                                'created' => new external_value(PARAM_INT, 'Creation time'),
+                                'modified' => new external_value(PARAM_INT, 'Time modified'),
+                                'mailed' => new external_value(PARAM_INT, 'Mailed?'),
+                                'subject' => new external_value(PARAM_TEXT, 'The post subject'),
+                                'message' => new external_value(PARAM_RAW, 'The post message'),
+                                'messageformat' => new external_format_value('message'),
+                                'messagetrust' => new external_value(PARAM_INT, 'Can we trust?'),
+                                'attachment' => new external_value(PARAM_RAW, 'Has attachments?'),
+                                'attachments' => new external_multiple_structure(
+                                    new external_single_structure(
+                                        array (
+                                            'filename' => new external_value(PARAM_FILE, 'file name'),
+                                            'mimetype' => new external_value(PARAM_RAW, 'mime type'),
+                                            'fileurl'  => new external_value(PARAM_URL, 'file download url')
+                                        )
+                                    ), 'attachments', VALUE_OPTIONAL
+                                ),
+                                'totalscore' => new external_value(PARAM_INT, 'The post message total score'),
+                                'mailnow' => new external_value(PARAM_INT, 'Mail now?'),
+                                'children' => new external_multiple_structure(new external_value(PARAM_INT, 'children post id')),
+                                'canreply' => new external_value(PARAM_BOOL, 'The user can reply to posts?'),
+                                'postread' => new external_value(PARAM_BOOL, 'The post was read'),
+                                'userfullname' => new external_value(PARAM_TEXT, 'Post author full name'),
+                                'userpictureurl' => new external_value(PARAM_URL, 'Post author picture.', VALUE_OPTIONAL)
+                            ), 'post'
+                        )
+                    ),
+                    'description' => new external_single_structure(
+                            array(
+                                'id' => new external_value(PARAM_INT, 'Post id'),
+                                'discussion' => new external_value(PARAM_INT, 'Discussion id'),
+                                'parent' => new external_value(PARAM_INT, 'Parent id'),
+                                'userid' => new external_value(PARAM_INT, 'User id'),
+                                'created' => new external_value(PARAM_INT, 'Creation time'),
+                                'modified' => new external_value(PARAM_INT, 'Time modified'),
+                                'mailed' => new external_value(PARAM_INT, 'Mailed?'),
+                                'subject' => new external_value(PARAM_TEXT, 'The post subject'),
+                                'message' => new external_value(PARAM_RAW, 'The post message'),
+                                'messageformat' => new external_format_value('message'),
+                                'messagetrust' => new external_value(PARAM_INT, 'Can we trust?'),
+                                'attachment' => new external_value(PARAM_RAW, 'Has attachments?'),
+                                'attachments' => new external_multiple_structure(
+                                    new external_single_structure(
+                                        array (
+                                            'filename' => new external_value(PARAM_FILE, 'file name'),
+                                            'mimetype' => new external_value(PARAM_RAW, 'mime type'),
+                                            'fileurl'  => new external_value(PARAM_URL, 'file download url')
+                                        )
+                                    ), 'attachments', VALUE_OPTIONAL
+                                ),
+                                'totalscore' => new external_value(PARAM_INT, 'The post message total score'),
+                                'mailnow' => new external_value(PARAM_INT, 'Mail now?'),
+                                'children' => new external_multiple_structure(new external_value(PARAM_INT, 'children post id')),
+                                'canreply' => new external_value(PARAM_BOOL, 'The user can reply to posts?'),
+                                'postread' => new external_value(PARAM_BOOL, 'The post was read'),
+                                'userfullname' => new external_value(PARAM_TEXT, 'Post author full name'),
+                                'userpictureurl' => new external_value(PARAM_URL, 'Post author picture.', VALUE_OPTIONAL)
+                            ), 'post'
+                        ),
+                'warnings' => new external_warnings()
+            )
+        );
+    }
+
+    /**
+     * Describes the parameters for add_forum_discussion_posts.
+     *
+     * @return external_external_function_parameters
+     * @since Moodle 2.6
+     */
+    public static function add_forum_discussion_posts_parameters() {
+        return new external_function_parameters (
+            array(
+                'subject' => new external_value(PARAM_TEXT, 'The post subject'),
+                'message' => new external_value(PARAM_RAW, 'The post message'),
+                'discussion' => new external_value(PARAM_INT, 'Discussion id'),
+                'parent' => new external_value(PARAM_INT, 'Parent id')
+            )
+        );
+    }
+
+    /**
+     * Returns the results of add forum discussion posts
+     *
+     * @param int $discussionid the post ids
+     * @param string $sortby sort by this element (id, created or modified)
+     * @param string $sortdirection sort direction: ASC or DESC
+     *
+     * @return array the forum post details
+     * @since Moodle 2.6
+     */
+    public static function add_forum_discussion_posts($subject, $message, $discussion, $parent) {
+        global $CFG, $DB, $USER;
+        require_once($CFG->dirroot."/mod/forum/lib.php");
+
+        // Validate the parameter.
+        $params = self::validate_parameters(self::add_forum_discussion_posts_parameters(),
+            array(
+                'subject' => $subject,
+                'message' => $message,
+                'discussion' => $discussion,
+                'parent' => $parent));
+
+        //根据discussion获取相关数据，并进行校验
+        $discussion_data = $DB->get_record('forum_discussions', array('id' => $discussion));
+        if(!$discussion_data){
+            throw new moodle_exception('discussion id is not exit', 'error');
+        }
+        $forum  = $DB->get_record('forum', array('id' => $discussion_data->forum));
+        $cm         = get_coursemodule_from_instance('forum', $forum->id);
+        // $context    = context_module::instance($cm->id);
+        // $post->message = file_save_draft_area_files($post->itemid, $context->id, 'mod_forum', 'post', $post->id,
+        //     mod_forum_post_form::editor_options($context, null), $post->message);
+        // $DB->set_field('forum_posts', 'message', $post->message, array('id'=>$post->id));
+        // forum_add_attachment($post, $forum, $cm, $mform, $message);
+
+        $post = new stdClass();        
+        $post->subject     = $subject;
+        $post->message     = $message;
+        $post->subscribe   = "1";        
+        $post->discussion  = $discussion;        
+        $post->parent      = $parent;
+        $post->userid      = $USER->id;
+        $post->created     = $post->modified = time();
+        $post->mailed      = "0";
+        $post->messageformat = "1";        
+        $post->attachment  = "";        
+        $post->id = $DB->insert_record("forum_posts", $post);
+        
+        $DB->set_field("forum_discussions", "timemodified", $post->modified, array("id" => $post->discussion));
+        $DB->set_field("forum_discussions", "usermodified", $post->userid, array("id" => $post->discussion));
+
+        if (forum_tp_can_track_forums($forum) && forum_tp_is_tracked($forum)) {
+            forum_tp_mark_post_read($post->userid, $post, $post->forum);
+        }
+
+        // Let Moodle know that assessable content is uploaded (eg for plagiarism detection)
+        forum_trigger_content_uploaded_event($post, $cm, 'forum_add_new_post');
+
+        $result=array();
+        $result["result"]='true';
+        return $result;
+    }
+
+    /**
+     * Describes the add_forum_discussion_posts return value.
+     *
+     * @return external_single_structure
+     * @since Moodle 2.7
+     */
+    public static function add_forum_discussion_posts_returns() {
+        return new external_single_structure(            
+            array(
+                'result' => new external_value(PARAM_RAW, 'resulet of chek code')                
+            ) 
+        ); 
+    }
+
 }
+

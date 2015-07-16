@@ -891,6 +891,33 @@ $functions = array(
         'capabilities'=> 'moodle/calendar:manageentries', 'moodle/calendar:manageownentries', 'moodle/calendar:managegroupentries'
     ),
 
+    'mod_forum_get_forum_discussions' => array(
+        'classname'   => 'mod_forum_external',
+        'methodname'  => 'get_forum_discussions',
+        'classpath'   => 'mod/forum/externallib.php',
+        'description' => 'Return discussions list',
+        'type'        => 'read',
+        'capabilities'=> 'moodle/calendar:manageentries', 'mod/forum:viewdiscussion', 'mod/forum:viewqandawithoutposting',
+    ),
+
+    'mod_forum_get_forum_discussion_posts' => array(
+        'classname'   => 'mod_forum_external',
+        'methodname'  => 'get_forum_discussion_posts',
+        'classpath'   => 'mod/forum/externallib.php',
+        'description' => 'Return posts list',
+        'type'        => 'read',
+        'capabilities'=> 'moodle/calendar:manageentries', 'mod/forum:viewdiscussion', 'mod/forum:viewqandawithoutposting',
+    ),
+
+    'mod_forum_add_forum_discussion_posts' => array(
+        'classname'   => 'mod_forum_external',
+        'methodname'  => 'add_forum_discussion_posts',
+        'classpath'   => 'mod/forum/externallib.php',
+        'description' => 'Return result of add posts',
+        'type'        => 'write',
+        'capabilities'=> 'moodle/calendar:manageentries', 'mod/forum:viewdiscussion', 'mod/forum:viewqandawithoutposting',
+    ),
+
     'local_get_verification_code' => array(
         'classname'   => 'local_verification_external',
         'methodname'  => 'get_verification_code',
@@ -918,7 +945,10 @@ $services = array(
             'core_user_update_users',            
             'core_calendar_get_calendar_events',
             'local_get_verification_code',
-        'moodle_course_get_courses'),
+            'moodle_course_get_courses',
+            'mod_forum_get_forum_discussions',
+            'mod_forum_get_forum_discussion_posts',
+            'mod_forum_add_forum_discussion_posts'),
         'enabled' => 0,
         'restrictedusers' => 0,
         'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,

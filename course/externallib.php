@@ -43,6 +43,7 @@ class core_course_external extends external_api {
      * Returns description of method parameters
      *
      * @return external_function_parameters
+     * @since Moodle 2.9 Options available
      * @since Moodle 2.2
      */
     public static function get_course_contents_parameters() {
@@ -50,10 +51,20 @@ class core_course_external extends external_api {
                 array('courseid' => new external_value(PARAM_INT, 'course id'),
                       'options' => new external_multiple_structure (
                               new external_single_structure(
-                                    array('name' => new external_value(PARAM_ALPHANUM, 'option name'),
-                                          'value' => new external_value(PARAM_RAW, 'the value of the option, this param is personaly validated in the external function.')
+                                array(
+                                    'name' => new external_value(PARAM_ALPHANUM,
+                                                'The expected keys (value format) are:
+                                                excludemodules (bool) Do not return modules, return only the sections structure
+                                                excludecontents (bool) Do not return module contents (i.e: files inside a resource)
+                                                sectionid (int) Return only this section
+                                                sectionnumber (int) Return only this section with number (order)
+                                                cmid (int) Return only this module information (among the whole sections structure)
+                                                modname (string) Return only modules with this name "label, forum, etc..."
+                                                modid (int) Return only the module with this id (to be used with modname'),
+                                    'value' => new external_value(PARAM_RAW, 'the value of the option,
+                                                                    this param is personaly validated in the external function.')
                               )
-                      ), 'Options, not used yet, might be used in later version', VALUE_DEFAULT, array())
+                      ), 'Options, used since Moodle 2.9', VALUE_DEFAULT, array())
                 )
         );
     }
@@ -62,8 +73,9 @@ class core_course_external extends external_api {
      * Get course contents
      *
      * @param int $courseid course id
-     * @param array $options These options are not used yet, might be used in later version
+     * @param array $options Options for filtering the results, used since Moodle 2.9
      * @return array
+     * @since Moodle 2.9 Options available
      * @since Moodle 2.2
      */
     public static function get_course_contents($courseid, $options = array()) {
@@ -74,14 +86,55 @@ class core_course_external extends external_api {
         $params = self::validate_parameters(self::get_course_contents_parameters(),
                         array('courseid' => $courseid, 'options' => $options));
 
+        $filters = array();
+        if (!empty($params['options'])) {
+
+            foreach ($params['options'] as $option) {
+                $name = trim($option['name']);
+                // Avoid duplicated options.
+                if (!isset($filters[$name])) {
+                    switch ($name) {
+                        case 'excludemodules':
+                        case 'excludecontents':
+                            $value = clean_param($option['value'], PARAM_BOOL);
+                            $filters[$name] = $value;
+                            break;
+                        case 'sectionid':
+                        case 'sectionnumber':
+                        case 'cmid':
+                        case 'modid':
+                            $value = clean_param($option['value'], PARAM_INT);
+                            if (is_numeric($value)) {
+                                $filters[$name] = $value;
+                            } else {
+                                throw new moodle_exception('errorinvalidparam', 'webservice', '', $name);
+                            }
+                            break;
+                        case 'modname':
+                            $value = clean_param($option['value'], PARAM_PLUGIN);
+                            if ($value) {
+                                $filters[$name] = $value;
+                            } else {
+                                throw new moodle_exception('errorinvalidparam', 'webservice', '', $name);
+                            }
+                            break;
+                        default:
+                            throw new moodle_exception('errorinvalidparam', 'webservice', '', $name);
+                    }
+                }
+            }
+        }
         //retrieve the course
         $course = $DB->get_record('course', array('id' => $params['courseid']), '*', MUST_EXIST);
 
-        //check course format exist
-        if (!file_exists($CFG->dirroot . '/course/format/' . $course->format . '/lib.php')) {
-            throw new moodle_exception('cannotgetcoursecontents', 'webservice', '', null, get_string('courseformatnotfound', 'error', '', $course->format));
-        } else {
-            require_once($CFG->dirroot . '/course/format/' . $course->format . '/lib.php');
+        if ($course->id != SITEID) {
+            // Check course format exist.
+            if (!file_exists($CFG->dirroot . '/course/format/' . $course->format . '/lib.php')) {
+                throw new moodle_exception('cannotgetcoursecontents', 'webservice', '', null,
+                                            get_string('courseformatnotfound', 'error', $course->format));
+            } else {
+                require_once($CFG->dirroot . '/course/format/' . $course->format . '/lib.php');
+            }
         }
 
         // now security checks
@@ -115,6 +168,27 @@ class core_course_external extends external_api {
                     continue;
                 }
 
+                // This becomes true when we are filtering and we found the value to filter with.
+                $sectionfound = false;
+
+                // Filter by section id.
+                if (!empty($filters['sectionid'])) {
+                    if ($section->id != $filters['sectionid']) {
+                        continue;
+                    } else {
+                        $sectionfound = true;
+                    }
+                }
+
+                // Filter by section number. Note that 0 is a valid section number.
+                if (isset($filters['sectionnumber'])) {
+                    if ($key != $filters['sectionnumber']) {
+                        continue;
+                    } else {
+                        $sectionfound = true;
+                    }
+                }
+
                 // reset $sectioncontents
                 $sectionvalues = array();
                 $sectionvalues['id'] = $section->id;
@@ -126,7 +200,7 @@ class core_course_external extends external_api {
                 $sectioncontents = array();
 
                 //for each module of the section
-                if (!empty($modinfosections[$section->section])) {
+                if (empty($filters['excludemodules']) and !empty($modinfosections[$section->section])) {
                     foreach ($modinfosections[$section->section] as $cmid) {
                         $cm = $modinfo->cms[$cmid];
 
@@ -135,11 +209,38 @@ class core_course_external extends external_api {
                             continue;
                         }
 
+                        // This becomes true when we are filtering and we found the value to filter with.
+                        $modfound = false;
+
+                        // Filter by cmid.
+                        if (!empty($filters['cmid'])) {
+                            if ($cmid != $filters['cmid']) {
+                                continue;
+                            } else {
+                                $modfound = true;
+                            }
+                        }
+
+                        // Filter by module name and id.
+                        if (!empty($filters['modname'])) {
+                            if ($cm->modname != $filters['modname']) {
+                                continue;
+                            } else if (!empty($filters['modid'])) {
+                                if ($cm->instance != $filters['modid']) {
+                                    continue;
+                                } else {
+                                    // Note that if we are only filtering by modname we don't break the loop.
+                                    $modfound = true;
+                                }
+                            }
+                        }
+
                         $module = array();
 
                         //common info (for people being able to see the module or availability dates)
                         $module['id'] = $cm->id;
                         $module['name'] = format_string($cm->name, true);
+                        $module['instance'] = $cm->instance;
                         $module['modname'] = $cm->modname;
                         $module['modplural'] = $cm->modplural;
                         $module['modicon'] = $cm->get_icon_url()->out(false);
@@ -148,15 +249,15 @@ class core_course_external extends external_api {
                         $modcontext = context_module::instance($cm->id);
 
                         if (!empty($cm->showdescription) or $cm->modname == 'label') {
-                            // We want to use the external format. However from reading get_formatted_content(), get_content() format is always FORMAT_HTML.
-                            list($module['description'], $descriptionformat) = external_format_text($cm->get_content(),
+                            // We want to use the external format. However from reading get_formatted_content(), $cm->content format is always FORMAT_HTML.
+                            list($module['description'], $descriptionformat) = external_format_text($cm->content,
                                 FORMAT_HTML, $modcontext->id, $cm->modname, 'intro', $cm->id);
                         }
 
                         //url of the module
-                        $url = $cm->get_url();
+                        $url = $cm->url;
                         if ($url) { //labels don't have url
-                            $module['url'] = $cm->get_url()->out(false);
+                            $module['url'] = $url->out(false);
                         }
 
                         $canviewhidden = has_capability('moodle/course:viewhiddenactivities',
@@ -164,26 +265,33 @@ class core_course_external extends external_api {
                         //user that can view hidden module should know about the visibility
                         $module['visible'] = $cm->visible;
 
-                        //availability date (also send to user who can see hidden module when the showavailabilyt is ON)
-                        if ($canupdatecourse or ($CFG->enableavailability && $canviewhidden && $cm->showavailability)) {
-                            $module['availablefrom'] = $cm->availablefrom;
-                            $module['availableuntil'] = $cm->availableuntil;
+                        // Availability date (also send to user who can see hidden module).
+                        if ($CFG->enableavailability && ($canviewhidden || $canupdatecourse)) {
+                            $module['availability'] = $cm->availability;
                         }
 
                         $baseurl = 'webservice/pluginfile.php';
 
                         //call $modulename_export_contents
                         //(each module callback take care about checking the capabilities)
+
                         require_once($CFG->dirroot . '/mod/' . $cm->modname . '/lib.php');
                         $getcontentfunction = $cm->modname.'_export_contents';
                         if (function_exists($getcontentfunction)) {
-                            if ($contents = $getcontentfunction($cm, $baseurl)) {
+                            if (empty($filters['excludecontents']) and $contents = $getcontentfunction($cm, $baseurl)) {
                                 $module['contents'] = $contents;
+                            } else {
+                                $module['contents'] = array();
                             }
                         }
 
                         //assign result to $sectioncontents
                         $sectioncontents[] = $module;
+
+                        // If we just did a filtering, break the loop.
+                        if ($modfound) {
+                            break;
+                        }
 
                     }
                 }
@@ -191,6 +299,11 @@ class core_course_external extends external_api {
 
                 // assign result to $coursecontents
                 $coursecontents[] = $sectionvalues;
+
+                // Break the loop if we are filtering.
+                if ($sectionfound) {
+                    break;
+                }
             }
         }
         return $coursecontents;
@@ -217,13 +330,13 @@ class core_course_external extends external_api {
                                     'id' => new external_value(PARAM_INT, 'activity id'),
                                     'url' => new external_value(PARAM_URL, 'activity url', VALUE_OPTIONAL),
                                     'name' => new external_value(PARAM_RAW, 'activity module name'),
+                                    'instance' => new external_value(PARAM_INT, 'instance id', VALUE_OPTIONAL),
                                     'description' => new external_value(PARAM_RAW, 'activity description', VALUE_OPTIONAL),
                                     'visible' => new external_value(PARAM_INT, 'is the module visible', VALUE_OPTIONAL),
                                     'modicon' => new external_value(PARAM_URL, 'activity icon url'),
                                     'modname' => new external_value(PARAM_PLUGIN, 'activity module type'),
                                     'modplural' => new external_value(PARAM_TEXT, 'activity module plural name'),
-                                    'availablefrom' => new external_value(PARAM_INT, 'module availability start date', VALUE_OPTIONAL),
-                                    'availableuntil' => new external_value(PARAM_INT, 'module availability en date', VALUE_OPTIONAL),
+                                    'availability' => new external_value(PARAM_RAW, 'module availability settings', VALUE_OPTIONAL),
                                     'indent' => new external_value(PARAM_INT, 'number of identation in the site'),
                                     'contents' => new external_multiple_structure(
                                           new external_single_structure(
