@@ -499,11 +499,11 @@ class core_enrol_external extends external_api {
                     'address'     => new external_value(PARAM_TEXT, 'Postal address', VALUE_OPTIONAL),
                     'phone1'      => new external_value(PARAM_NOTAGS, 'Phone 1', VALUE_OPTIONAL),
                     'phone2'      => new external_value(PARAM_NOTAGS, 'Phone 2', VALUE_OPTIONAL),
-                    'icq'         => new external_value(PARAM_NOTAGS, 'icq number', VALUE_OPTIONAL),
-                    'skype'       => new external_value(PARAM_NOTAGS, 'skype id', VALUE_OPTIONAL),
-                    'yahoo'       => new external_value(PARAM_NOTAGS, 'yahoo id', VALUE_OPTIONAL),
-                    'aim'         => new external_value(PARAM_NOTAGS, 'aim id', VALUE_OPTIONAL),
-                    'msn'         => new external_value(PARAM_NOTAGS, 'msn number', VALUE_OPTIONAL),
+                    //'icq'         => new external_value(PARAM_NOTAGS, 'icq number', VALUE_OPTIONAL),
+                    //'skype'       => new external_value(PARAM_NOTAGS, 'skype id', VALUE_OPTIONAL),
+                    //'yahoo'       => new external_value(PARAM_NOTAGS, 'yahoo id', VALUE_OPTIONAL),
+                    //'aim'         => new external_value(PARAM_NOTAGS, 'aim id', VALUE_OPTIONAL),
+                    //'msn'         => new external_value(PARAM_NOTAGS, 'msn number', VALUE_OPTIONAL),
                     'department'  => new external_value(PARAM_TEXT, 'department', VALUE_OPTIONAL),
                     'institution' => new external_value(PARAM_TEXT, 'institution', VALUE_OPTIONAL),
                     'idnumber'    => new external_value(PARAM_RAW, 'An arbitrary ID code number perhaps from the institution', VALUE_OPTIONAL),
@@ -517,7 +517,7 @@ class core_enrol_external extends external_api {
                     'country'     => new external_value(PARAM_ALPHA, 'Home country code of the user, such as AU or CZ', VALUE_OPTIONAL),
                     'profileimageurlsmall' => new external_value(PARAM_URL, 'User image profile URL - small version', VALUE_OPTIONAL),
                     'profileimageurl' => new external_value(PARAM_URL, 'User image profile URL - big version', VALUE_OPTIONAL),
-                    'customfields' => new external_multiple_structure(
+                    /*'customfields' => new external_multiple_structure(
                         new external_single_structure(
                             array(
                                 'type'  => new external_value(PARAM_ALPHANUMEXT, 'The type of the custom field - text field, checkbox...'),
@@ -558,7 +558,7 @@ class core_enrol_external extends external_api {
                                 'fullname' => new external_value(PARAM_RAW, 'Fullname of the course'),
                                 'shortname' => new external_value(PARAM_RAW, 'Shortname of the course')
                             )
-                    ), 'Courses where the user is enrolled - limited by which courses the user is able to see', VALUE_OPTIONAL)
+                    ), 'Courses where the user is enrolled - limited by which courses the user is able to see', VALUE_OPTIONAL)*/
                 )
             )
         );

@@ -23,7 +23,7 @@
 
 define('AJAX_SCRIPT', true);
 define('REQUIRE_CORRECT_ACCESS', true);
-define('NO_MOODLE_COOKIES', true);
+define('NO_MOODLE_COOKIES', false);
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 

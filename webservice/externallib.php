@@ -174,8 +174,8 @@ class core_webservice_external extends external_api {
             array(
                 'sitename'       => new external_value(PARAM_RAW, 'site name'),
                 'username'       => new external_value(PARAM_RAW, 'username'),
-                'firstname'      => new external_value(PARAM_TEXT, 'first name'),
-                'lastname'       => new external_value(PARAM_TEXT, 'last name'),
+                //'firstname'      => new external_value(PARAM_TEXT, 'first name'),
+                //'lastname'       => new external_value(PARAM_TEXT, 'last name'),
                 'fullname'       => new external_value(PARAM_TEXT, 'user full name'),
                 'lang'           => new external_value(PARAM_LANG, 'user language'),
                 'userid'         => new external_value(PARAM_INT, 'user id'),
@@ -186,7 +186,7 @@ class core_webservice_external extends external_api {
                     "webservice/pluginfile.php?token=WSTOKEN&file="
                     Of course the user can only see profile picture depending
                     on his/her permissions. Moreover it is recommended to use HTTPS too.'),
-                'functions'      => new external_multiple_structure(
+               'functions'      => new external_multiple_structure(
                     new external_single_structure(
                         array(
                             'name' => new external_value(PARAM_RAW, 'function name'),
@@ -194,13 +194,13 @@ class core_webservice_external extends external_api {
                                         'The version number of the component to which the function belongs')
                         ), 'functions that are available')
                     ),
-                'downloadfiles'  => new external_value(PARAM_INT, '1 if users are allowed to download files, 0 if not',
+                /*'downloadfiles'  => new external_value(PARAM_INT, '1 if users are allowed to download files, 0 if not',
                                                        VALUE_OPTIONAL),
                 'uploadfiles'  => new external_value(PARAM_INT, '1 if users are allowed to upload files, 0 if not',
                                                        VALUE_OPTIONAL),
                 'release'  => new external_value(PARAM_TEXT, 'Moodle release number', VALUE_OPTIONAL),
                 'version'  => new external_value(PARAM_TEXT, 'Moodle version number', VALUE_OPTIONAL),
-                'mobilecssurl'  => new external_value(PARAM_URL, 'Mobile custom CSS theme', VALUE_OPTIONAL)
+                'mobilecssurl'  => new external_value(PARAM_URL, 'Mobile custom CSS theme', VALUE_OPTIONAL)*/
             )
         );
     }

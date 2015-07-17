@@ -6,10 +6,10 @@ $CFG = new stdClass();
 
 $CFG->dbtype    = 'mysqli';
 $CFG->dblibrary = 'native';
-$CFG->dbhost    = '172.19.42.53';
+$CFG->dbhost    = '172.19.43.110';
 $CFG->dbname    = 'fdmoodle';
 $CFG->dbuser    = 'root';
-$CFG->dbpass    = 'root';
+$CFG->dbpass    = 'ouyangyu';
 $CFG->prefix    = 'mdl_';
 $CFG->dboptions = array (
   'dbpersist' => 0,
@@ -17,8 +17,8 @@ $CFG->dboptions = array (
   'dbsocket' => '',
 );
 
-$CFG->wwwroot   = 'http://localhost:8080/fdmoodle';
-$CFG->dataroot  = '/Applications/MAMP/fdmoodledata';
+$CFG->wwwroot   = 'http://172.19.43.110/fdmoodle';
+$CFG->dataroot  = '/var/www/fdmoodledata';
 $CFG->admin     = 'admin';
 
 $CFG->directorypermissions = 0777;
