@@ -925,6 +925,14 @@ $functions = array(
         'description' => 'Return verification code',
         'type'        => 'write',
     ),
+
+    'gradereport_user_view_grade_report' => array(
+        'classname'   => 'gradereport_user_external',
+        'methodname'  => 'view_grade_report',
+        'classpath'   => 'grade/report/user/externallib.php',
+        'description' => 'Return user report',
+        'type'        => 'read',
+    ),
 );
 
 $services = array(
@@ -948,7 +956,8 @@ $services = array(
             'moodle_course_get_courses',
             'mod_forum_get_forum_discussions',
             'mod_forum_get_forum_discussion_posts',
-            'mod_forum_add_forum_discussion_posts'),
+            'mod_forum_add_forum_discussion_posts',
+            'gradereport_user_view_grade_report'),
         'enabled' => 0,
         'restrictedusers' => 0,
         'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,
