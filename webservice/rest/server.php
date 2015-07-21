@@ -43,6 +43,21 @@ if (!webservice_protocol_is_enabled('rest')) {
     die;
 }
 
+/*$courses = enrol_get_users_courses(3);
+
+foreach($courses as $course) {
+    //$context = context_course::instance($course->id);
+    $sql = "SELECT gg.finalgrade FROM {grade_grades} gg ,{grade_items} gi WHERE gi.itemtype='course' AND gi.courseid = $course->id AND gi.id = gg.itemid";
+    $grade = $DB->get_record_sql($sql);
+    if(!$grade) {
+        $grade->finalgrade = null;
+    }
+    $result[] = array(
+        'courseid'=>$course->id,
+        'fullname'=>$course->fullname,
+        'finalgrade'=>$grade->finalgrade
+    );
+}*/
 $server = new webservice_rest_server(WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN);
 $server->run();
 die;

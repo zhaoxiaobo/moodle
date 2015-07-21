@@ -160,6 +160,7 @@ function grade_get_course_grade($userid, $courseid_or_ids=null) {
     foreach ($courseid_or_ids as $courseid) {
 
         $grade_item = grade_item::fetch_course_item($courseid);
+
         $course_items[$grade_item->courseid] = $grade_item;
 
 
