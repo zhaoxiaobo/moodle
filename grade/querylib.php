@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+
+require_once($CFG->libdir . '/grade/grade_item.php');
+
 /**
  * Functions used to retrieve grades objects
  *
@@ -134,7 +137,6 @@ function grade_get_course_grades($courseid, $userid_or_ids=null) {
  * @return mixed grade info or grades array including item info, false if error
  */
 function grade_get_course_grade($userid, $courseid_or_ids=null) {
-
     if (!is_array($courseid_or_ids)) {
         if (empty($courseid_or_ids)) {
             if (!$courses = enrol_get_users_courses($userid)) {
@@ -156,8 +158,11 @@ function grade_get_course_grade($userid, $courseid_or_ids=null) {
     }
 
     foreach ($courseid_or_ids as $courseid) {
+
         $grade_item = grade_item::fetch_course_item($courseid);
         $course_items[$grade_item->courseid] = $grade_item;
+
+
     }
 
     $grades = array();

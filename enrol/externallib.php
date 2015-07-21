@@ -320,7 +320,28 @@ class core_enrol_external extends external_api {
             $enrolledsql = "SELECT COUNT('x') FROM ($enrolledsqlselect) enrolleduserids";
             $enrolledusercount = $DB->count_records_sql($enrolledsql, $enrolledparams);
 
-            $result[] = array('id'=>$course->id, 'shortname'=>$course->shortname, 'fullname'=>$course->fullname,'summary'=>$course->summary, 'idnumber'=>$course->idnumber,'visible'=>$course->visible, 'enrolledusercount'=>$enrolledusercount);
+            $sql = "select u.id,u.firstname ,u.lastname from {role_assignments} mra
+			LEFT JOIN
+			{role} r
+			on
+			mra.roleid = r.id
+			LEFT JOIN
+			{user} u
+			on
+			u.id = mra.userid
+			where mra.contextid = $context->id
+			and r.shortname in ('teacher','editingteacher','coursecreator')
+			GROUP BY mra.userid";
+            $teachers = $DB->get_records_sql($sql);
+            $teachername = "";
+            foreach($teachers as $teacher) {
+                $teachername[] = $teacher->lastname.$teacher->firstname;
+
+            }
+
+            $teachers = implode("-",$teachername);
+
+            $result[] = array('id'=>$course->id, 'shortname'=>$course->shortname, 'fullname'=>$course->fullname,'summary'=>$course->summary, 'idnumber'=>$course->idnumber,'visible'=>$course->visible, 'enrolledusercount'=>$enrolledusercount ,'teachers'=>$teachers);
         }
 
         return $result;
@@ -342,6 +363,8 @@ class core_enrol_external extends external_api {
                     'enrolledusercount' => new external_value(PARAM_INT, 'Number of enrolled users in this course'),
                     'idnumber'  => new external_value(PARAM_RAW, 'id number of course'),
                     'visible'   => new external_value(PARAM_INT, '1 means visible, 0 means hidden course'),
+                    'teachers'  => new external_value(PARAM_RAW, 'teachers of course'),
+
                 )
             )
         );

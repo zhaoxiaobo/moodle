@@ -858,9 +858,9 @@ abstract class webservice_server implements webservice_server_interface {
     protected function authenticate_user() {
         global $CFG, $DB;
 
-        if (!NO_MOODLE_COOKIES) {
+        /*if (!NO_MOODLE_COOKIES) {
             throw new coding_exception('Cookies must be disabled in WS servers!');
-        }
+        }*/
 
         $loginfaileddefaultparams = array(
             'context' => context_system::instance(),

@@ -933,6 +933,14 @@ $functions = array(
         'description' => 'Return user report',
         'type'        => 'read',
     ),
+    'gradereport_overview_get_cources_grade' => array(
+        'classname' => 'gradereport_user_cources_external',
+        'methodname' => 'get_cources_grade',
+        'classpath' => 'grade/report/overview/externallib.php',
+        'description' => 'Trigger the report view event',
+        'type' => 'read',
+        'capabilities' => 'gradereport/user:view'
+    )
 );
 
 $services = array(
@@ -957,7 +965,8 @@ $services = array(
             'mod_forum_get_forum_discussions',
             'mod_forum_get_forum_discussion_posts',
             'mod_forum_add_forum_discussion_posts',
-            'gradereport_user_get_grades_table'),
+            'gradereport_user_get_grades_table',
+            'gradereport_overview_get_cources_grade'),
         'enabled' => 0,
         'restrictedusers' => 0,
         'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,
