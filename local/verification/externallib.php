@@ -17,7 +17,7 @@ class local_verification_external extends external_api {
      * Returns verification code
      * @return array verification code
      */
-    public static function get_verification_code($userid) {
+    public static function get_verification_code($phone) {
         global $USER,$DB,$CFG,$serverIP;
         require_once($CFG->dirroot."/user/lib.php");
         require_once($CFG->dirroot."/user/profile/lib.php");
