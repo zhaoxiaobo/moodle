@@ -43,10 +43,10 @@ class local_verification_external extends external_api {
             if ($conten_arr["status"] == "1") {
                     $code = $conten_arr["code"];
                     //===========更新用户表================
-                    $userinfo=array();
-                    $userinfo["id"]=$params["userid"];
-                    $userinfo["verification_code"]=$code;
-                    user_update_user($userinfo);
+                    // $userinfo=array();
+                    // $userinfo["id"]=$params["userid"];
+                    // $userinfo["verification_code"]=$code;
+                    // user_update_user($userinfo);
                     //===========记录用户更新日志==========
                     $transaction->allow_commit();
                     //===========返回结果集================

@@ -279,7 +279,7 @@ class core_user_external extends external_api {
                 'users' => new external_multiple_structure(
                     new external_single_structure(
                         array(
-                            'id'    => new external_value(PARAM_INT, 'ID of the user'),
+                            'id'    => new external_value(PARAM_INT, 'ID of the user', VALUE_OPTIONAL, '',NULL_NOT_ALLOWED),
                             'username'            => new external_value(PARAM_USERNAME, 'Username policy is defined in Moodle security config.', VALUE_OPTIONAL, '',NULL_NOT_ALLOWED),
                             'password'            => new external_value(PARAM_RAW, 'Plain text password consisting of any characters', VALUE_OPTIONAL, '',NULL_NOT_ALLOWED),
                             'firstname'           => new external_value(PARAM_NOTAGS, 'The first name(s) of the user', VALUE_OPTIONAL, '',NULL_NOT_ALLOWED),
@@ -298,6 +298,7 @@ class core_user_external extends external_api {
                             'lastnamephonetic'    => new external_value(PARAM_NOTAGS, 'The family name phonetically of the user', VALUE_OPTIONAL),
                             'middlename'          => new external_value(PARAM_NOTAGS, 'The middle name of the user', VALUE_OPTIONAL),
                             'alternatename'       => new external_value(PARAM_NOTAGS, 'The alternate name of the user', VALUE_OPTIONAL),
+                            'phone2'              => new external_value(PARAM_NOTAGS, 'Phone 2', VALUE_OPTIONAL),
                             'customfields'        => new external_multiple_structure(
                                 new external_single_structure(
                                     array(
@@ -327,7 +328,7 @@ class core_user_external extends external_api {
      * @since Moodle 2.2
      */
     public static function update_users($users) {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
         require_once($CFG->dirroot."/user/lib.php");
         require_once($CFG->dirroot."/user/profile/lib.php"); //required for customfields related function
 
@@ -340,30 +341,34 @@ class core_user_external extends external_api {
 
         $transaction = $DB->start_delegated_transaction();
 
-        foreach ($params['users'] as $user) {
-            user_update_user($user);
+        foreach ($params['users'] as $users) {
+            if(!isset($users["id"])){
+                $users["id"] = $USER -> id;
+            }
+            user_update_user($users);
             //update user custom fields
             if(!empty($user['customfields'])) {
 
-                foreach($user['customfields'] as $customfield) {
-                    $user["profile_field_".$customfield['type']] = $customfield['value']; //profile_save_data() saves profile file
+                foreach($users['customfields'] as $customfield) {
+                    $users["profile_field_".$customfield['type']] = $customfield['value']; //profile_save_data() saves profile file
                                                                                             //it's expecting a user with the correct id,
                                                                                             //and custom field to be named profile_field_"shortname"
                 }
-                profile_save_data((object) $user);
+                profile_save_data((object) $users);
             }
 
             //preferences
-            if (!empty($user['preferences'])) {
-                foreach($user['preferences'] as $preference) {
-                    set_user_preference($preference['type'], $preference['value'],$user['id']);
+            if (!empty($users['preferences'])) {
+                foreach($users['preferences'] as $preference) {
+                    set_user_preference($preference['type'], $preference['value'],$users['id']);
                 }
             }
         }
 
         $transaction->allow_commit();
-
-        return null;
+        $result=array();
+        $result["result"]='true';
+        return $result;
     }
 
    /**
@@ -373,7 +378,11 @@ class core_user_external extends external_api {
      * @since Moodle 2.2
      */
     public static function update_users_returns() {
-        return null;
+        return new external_single_structure(            
+            array(
+                'result' => new external_value(PARAM_RAW, 'result')                
+            )
+        );
     }
 
    /**
@@ -487,6 +496,7 @@ class core_user_external extends external_api {
                                 "firstname" (string) user first name (Note: you can use % for searching but it may be considerably slower!),
                                 "idnumber" (string) matching user idnumber,
                                 "username" (string) matching user username,
+                                "phone2" (string) matching user phone2,
                                 "email" (string) user email (Note: you can use % for searching but it may be considerably slower!),
                                 "auth" (string) matching user auth plugin'),
                             'value' => new external_value(PARAM_RAW, 'the value to search')
@@ -517,7 +527,6 @@ class core_user_external extends external_api {
 
         $params = self::validate_parameters(self::get_users_parameters(),
                 array('criteria' => $criteria));
-
         // Validate the criteria and retrieve the users.
         $users = array();
         $warnings = array();
@@ -544,6 +553,9 @@ class core_user_external extends external_api {
                     $paramtype = PARAM_INT;
                     break;
                 case 'idnumber':
+                    $paramtype = PARAM_RAW;
+                    break;
+                case 'phone2':
                     $paramtype = PARAM_RAW;
                     break;
                 case 'username':
@@ -583,6 +595,7 @@ class core_user_external extends external_api {
                 switch ($criteria['key']) {
                     case 'id':
                     case 'idnumber':
+                    case 'phone2':
                     case 'username':
                     case 'auth':
                         $sql .= $criteria['key'] . ' = :' . $criteria['key'];
@@ -594,6 +607,7 @@ class core_user_external extends external_api {
                         $sql .= $DB->sql_like($criteria['key'], ':' . $criteria['key'], false);
                         $sqlparams[$criteria['key']] = $cleanedvalue;
                         break;
+
                     default:
                         break;
                 }
@@ -654,7 +668,7 @@ class core_user_external extends external_api {
     public static function get_users_by_id_parameters() {
         return new external_function_parameters(
                 array(
-                    'userids' => new external_multiple_structure(new external_value(PARAM_INT, 'user ID')),
+                    'userids' => new external_multiple_structure(new external_value(PARAM_INT, 'user ID'), VALUE_DEFAULT, array()),
                 )
         );
     }
@@ -671,13 +685,15 @@ class core_user_external extends external_api {
      * @deprecated Moodle 2.5 MDL-38030 - Please do not call this function any more.
      * @see core_user_external::get_users_by_field()
      */
-    public static function get_users_by_id($userids) {
+    public static function get_users_by_id($userids = array()) {
         global $CFG, $USER, $DB;
         require_once($CFG->dirroot . "/user/lib.php");
 
         $params = self::validate_parameters(self::get_users_by_id_parameters(),
                 array('userids'=>$userids));
-
+        if(empty($userids)){
+            $userids[] = $USER -> id;
+        }
         list($sqluserids, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $uselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
         $ujoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = u.id AND ctx.contextlevel = :contextlevel)";
