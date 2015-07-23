@@ -6,7 +6,7 @@ $CFG = new stdClass();
 
 $CFG->dbtype    = 'mysqli';
 $CFG->dblibrary = 'native';
-$CFG->dbhost    = '172.19.43.110';
+$CFG->dbhost    = '127.0.0.1';
 $CFG->dbname    = 'fdmoodle';
 $CFG->dbuser    = 'root';
 $CFG->dbpass    = 'ouyangyu';
@@ -17,8 +17,8 @@ $CFG->dboptions = array (
   'dbsocket' => '',
 );
 
-$CFG->wwwroot   = 'http://172.19.43.110/fdmoodle';
-$CFG->dataroot  = '/var/www/fdmoodledata';
+$CFG->wwwroot   = 'http://172.19.43.177/fdmoodle';
+$CFG->dataroot  = '/var/fdmoodledata';
 $CFG->admin     = 'admin';
 
 $CFG->directorypermissions = 0777;
