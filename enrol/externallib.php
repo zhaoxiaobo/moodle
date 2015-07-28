@@ -340,7 +340,11 @@ class core_enrol_external extends external_api {
             }
 
             $teachers = implode("-",$teachername);
-
+            //add by zxb 剔除课程简介中的html标签  
+            $course->summary = strip_tags($course->summary);
+            $arr= array("\n", "\r", "\r\n");
+            $course->summary = str_replace($arr,"",$course->summary);
+            //剔除结束
             $result[] = array('id'=>$course->id, 'shortname'=>$course->shortname, 'fullname'=>$course->fullname,'summary'=>$course->summary, 'idnumber'=>$course->idnumber,'visible'=>$course->visible, 'enrolledusercount'=>$enrolledusercount ,'teachers'=>$teachers);
         }
 
