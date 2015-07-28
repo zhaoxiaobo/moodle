@@ -197,6 +197,11 @@ class core_course_external extends external_api {
                 list($sectionvalues['summary'], $sectionvalues['summaryformat']) =
                         external_format_text($section->summary, $section->summaryformat,
                                 $context->id, 'course', 'section', $section->id);
+                //add by zxb 剔除课程简介中的html标签  
+                $sectionvalues['summary'] = strip_tags($sectionvalues['summary']);
+                $arr= array("\n", "\r", "\r\n");
+                $sectionvalues['summary'] = str_replace($arr,"",$sectionvalues['summary']);
+                //剔除结束
                 $sectioncontents = array();
 
                 //for each module of the section
