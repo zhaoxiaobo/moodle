@@ -1,7 +1,7 @@
 <?php
 
 // Thisnihao file is part of Moodle - http://moodle.org/
-//
+//1
 
 /**
  * Founder Moodle frontpage.
