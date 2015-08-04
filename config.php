@@ -17,7 +17,7 @@ $CFG->dboptions = array (
   'dbsocket' => '',
 );
 
-$CFG->wwwroot   = 'http://172.19.43.177/fdmoodle';
+$CFG->wwwroot   = 'http://172.19.43.180/fdmoodle';
 $CFG->dataroot  = '/var/fdmoodledata';
 $CFG->admin     = 'admin';
 

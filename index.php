@@ -40,7 +40,7 @@
     } else {
         user_accesstime_log();
     }
-
+//var_dump($SESSION);die();
     $hassiteconfig = has_capability('moodle/site:config', context_system::instance());
 
 /// If the site is currently under maintenance, then print a message
