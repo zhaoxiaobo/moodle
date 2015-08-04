@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 
 // Thisnihao file is part of Moodle - http://moodle.org/
@@ -274,3 +275,4 @@
         echo $courserenderer->add_new_course_button();
     }
     echo $OUTPUT->footer();
+
