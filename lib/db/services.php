@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php
 // This file is part of Moodle - http://moodle.org/
 //
@@ -1969,4 +1968,3 @@ $services = array(
         'uploadfiles' => 1
     ),
 );
->>>>>>> 38140a43ee05bf1578b736b532a56bed53383a29
