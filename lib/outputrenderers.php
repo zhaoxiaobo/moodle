@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php 
 // This file is part of Moodle - http://moodle.org/
 //
@@ -8112,4 +8111,3 @@ class core_renderer_maintenance extends core_renderer {
         return '';
     }
 }
->>>>>>> 38140a43ee05bf1578b736b532a56bed53383a29
