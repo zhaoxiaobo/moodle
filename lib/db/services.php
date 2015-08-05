@@ -933,11 +933,28 @@ $functions = array(
         'description' => 'Return user report',
         'type'        => 'write',
     ),
+
     'gradereport_overview_view_grade_report' => array(
         'classname' => 'gradereport_user_cources_external',
         'methodname' => 'view_grade_report',
         'classpath' => 'grade/report/overview/externallib.php',
         'description' => 'Trigger the report view event',
+        'type' => 'read',
+    ),
+
+    'local_get_report_by_course_id' => array(
+        'classname' => 'local_report_external',
+        'methodname' => 'get_report_by_course_id',
+        'classpath' => 'local/report/externallib.php',
+        'description' => 'the report of course',
+        'type' => 'read',
+    ),
+
+    'core_message_get_messages' => array(
+        'classname' => 'core_message_external',
+        'methodname' => 'get_messages',
+        'classpath' => 'message/externallib.php',
+        'description' => 'get message contents',
         'type' => 'read',
     )
 );
@@ -965,7 +982,9 @@ $services = array(
             'mod_forum_get_forum_discussion_posts',
             'mod_forum_add_forum_discussion_posts',
             'gradereport_user_get_grades_table',
-        'gradereport_overview_view_grade_report'),
+            'gradereport_overview_view_grade_report',
+            'local_get_report_by_course_id',
+            'core_message_get_messages'),
         'enabled' => 0,
         'restrictedusers' => 0,
         'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,
