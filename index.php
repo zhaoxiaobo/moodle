@@ -1,7 +1,7 @@
 <?php
 
 // Thisnihao file is part of Moodle - http://moodle.org/
-//1
+//
 
 /**
  * Founder Moodle frontpage.
@@ -40,7 +40,7 @@
     } else {
         user_accesstime_log();
     }
-
+//var_dump($SESSION);die();
     $hassiteconfig = has_capability('moodle/site:config', context_system::instance());
 
 /// If the site is currently under maintenance, then print a message
@@ -274,3 +274,4 @@
         echo $courserenderer->add_new_course_button();
     }
     echo $OUTPUT->footer();
+

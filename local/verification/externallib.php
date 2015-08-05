@@ -8,8 +8,8 @@ class local_verification_external extends external_api {
      */
     public static function get_verification_code_parameters() {
         return new external_function_parameters(
-                array('phone' => new external_value(PARAM_TEXT, 'the info of phone2')
-                    )
+            array('phone' => new external_value(PARAM_TEXT, 'the info of phone2')
+            )
         );
     }
 
@@ -23,7 +23,7 @@ class local_verification_external extends external_api {
         require_once($CFG->dirroot."/user/profile/lib.php");
 
         $params = self::validate_parameters(self::get_verification_code_parameters(),
-                array('phone' => $phone));
+            array('phone' => $phone));
 
         $transaction = $DB->start_delegated_transaction();
 
@@ -41,18 +41,18 @@ class local_verification_external extends external_api {
             $con = file_get_contents($url);
             $conten_arr = (array)json_decode($con);
             if ($conten_arr["status"] == "1") {
-                    $code = $conten_arr["code"];
-                    //===========更新用户表================
-                    // $userinfo=array();
-                    // $userinfo["id"]=$params["userid"];
-                    // $userinfo["verification_code"]=$code;
-                    // user_update_user($userinfo);
-                    //===========记录用户更新日志==========
-                    $transaction->allow_commit();
-                    //===========返回结果集================
-                    $result=array();
-                    $result["code"]=$code;
-                    return $result;
+                $code = $conten_arr["code"];
+                //===========更新用户表================
+                // $userinfo=array();
+                // $userinfo["id"]=$params["userid"];
+                // $userinfo["verification_code"]=$code;
+                // user_update_user($userinfo);
+                //===========记录用户更新日志==========
+                $transaction->allow_commit();
+                //===========返回结果集================
+                $result=array();
+                $result["code"]=$code;
+                return $result;
             }else{
                 throw new moodle_exception('Failed to send text messages', 'error');
             }
@@ -66,11 +66,11 @@ class local_verification_external extends external_api {
      * @return external_description
      */
     public static function get_verification_code_returns() {
-        return new external_single_structure(            
+        return new external_single_structure(
             array(
-                'code' => new external_value(PARAM_RAW, 'Verification code information')                
-            ) 
-        );   
+                'code' => new external_value(PARAM_RAW, 'Verification code information')
+            )
+        );
     }
 
 
@@ -81,10 +81,10 @@ class local_verification_external extends external_api {
      */
     public static function check_verification_code_parameters() {
         return new external_function_parameters(
-                array('userid' => new external_value(PARAM_TEXT, 'the info of userid'),
-                    'code' => new external_value(PARAM_INT, 'Verification code information')
+            array('userid' => new external_value(PARAM_TEXT, 'the info of userid'),
+                'code' => new external_value(PARAM_INT, 'Verification code information')
 
-                )
+            )
         );
     }
 
@@ -97,20 +97,20 @@ class local_verification_external extends external_api {
         require_once($CFG->dirroot."/user/lib.php");
 
         $params = self::validate_parameters(self::check_verification_code_parameters(),
-                array('userid' => $userid , 'code' => $code));
+            array('userid' => $userid , 'code' => $code));
 
         //================查询条件===============
         $sql = ' deleted = 0 AND id = :id AND verification_code = :verification_code';
         $sqlparams = array();
         $sqlparams["id"] = $userid;
         $sqlparams["verification_code"] = $code;
-        
+
         //===============返回结果=============
         $users = array();
         $result=array();
 
         $users = $DB->get_records_select('user', $sql, $sqlparams, 'id ASC');
-        if (empty($users)) 
+        if (empty($users))
             $result["result"]='false';
         else
             $result["result"]='true';
@@ -123,10 +123,10 @@ class local_verification_external extends external_api {
      * @return external_description
      */
     public static function check_verification_code_returns() {
-        return new external_single_structure(            
+        return new external_single_structure(
             array(
-                'result' => new external_value(PARAM_RAW, 'resulet of chek code')                
-            ) 
-        );   
+                'result' => new external_value(PARAM_RAW, 'resulet of chek code')
+            )
+        );
     }
 }

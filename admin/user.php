@@ -250,7 +250,6 @@
             }
             $users = $nusers;
         }
-
         $table = new html_table();
         $table->head = array ();
         $table->colclasses = array();

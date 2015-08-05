@@ -42,7 +42,6 @@ if (!webservice_protocol_is_enabled('rest')) {
         DEBUG_DEVELOPER);
     die;
 }
-
 /*$courses = enrol_get_users_courses(3);
 
 foreach($courses as $course) {
