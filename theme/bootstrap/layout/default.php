@@ -27,7 +27,14 @@ if ($knownregionpre || $knownregionpost) {
     theme_bootstrap_initialise_zoom($PAGE);
 }
 $setzoom = theme_bootstrap_get_zoom();
+//获取USER AGENT
+$agent = strtolower($_SERVER['HTTP_USER_AGENT']);
 
+//分析数据
+$is_pc = (strpos($agent, 'windows nt')) ? true : false;
+$is_iphone = (strpos($agent, 'iphone')) ? true : false;
+$is_ipad = (strpos($agent, 'ipad')) ? true : false;
+$is_android = (strpos($agent, 'android')) ? true : false;
 echo $OUTPUT->doctype() ?>
 <html <?php echo $OUTPUT->htmlattributes(); ?>>
 <head>
@@ -40,7 +47,7 @@ echo $OUTPUT->doctype() ?>
 <body <?php echo $OUTPUT->body_attributes($setzoom); ?>>
 
 <?php echo $OUTPUT->standard_top_of_body_html() ?>
-
+<?php if($is_pc){?>
 <nav role="navigation" class="navbar navbar-default">
     <div class="container-fluid">
     <div class="navbar-header">
@@ -68,8 +75,9 @@ echo $OUTPUT->doctype() ?>
     <?php echo $OUTPUT->page_heading(); ?>
     </div>
 </header>
-
+<?php }?>
 <div id="page" class="container-fluid">
+    <?php if($is_pc){?>
     <header id="page-header" class="clearfix">
         <div id="page-navbar" class="clearfix">
             <nav class="breadcrumb-nav" role="navigation" aria-label="breadcrumb"><?php echo $OUTPUT->navbar(); ?></nav>
@@ -83,7 +91,7 @@ echo $OUTPUT->doctype() ?>
             <?php echo $OUTPUT->course_header(); ?>
         </div>
     </header>
-
+<?php }?>
     <div id="page-content" class="row">
         <div id="region-main" class="<?php echo $regions['content']; ?>">
             <?php
