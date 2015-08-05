@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php
 
 // Thisnihao file is part of Moodle - http://moodle.org/
