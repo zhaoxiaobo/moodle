@@ -368,6 +368,9 @@ class core_group_external extends external_api {
      * @since Moodle 2.2
      */
     public static function get_group_members($groupids) {
+        global $CFG, $USER, $DB;
+        require_once($CFG->dirroot . "/user/lib.php");
+
         $members = array();
 
         $params = self::validate_parameters(self::get_group_members_parameters(), array('groupids'=>$groupids));
@@ -388,8 +391,38 @@ class core_group_external extends external_api {
             require_capability('moodle/course:managegroups', $context);
 
             $groupmembers = groups_get_members($group->id, 'u.id', 'lastname ASC, firstname ASC');
-
-            $members[] = array('groupid'=>$groupid, 'userids'=>array_keys($groupmembers));
+            $groupmembers_arr = array();
+            foreach($groupmembers as $value){
+                //print_r($value->id);
+                $params_info = array();
+                $params_info["param1"] = $value->id;
+                $uselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
+                $ujoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = u.id AND ctx.contextlevel = :contextlevel)";
+                $params_info['contextlevel'] = CONTEXT_USER;
+                $usersql = "SELECT u.* $uselect
+                              FROM {user} u $ujoin
+                             WHERE u.id = :param1";
+                $users = $DB->get_recordset_sql($usersql, $params_info);
+                foreach ($users as $user) {
+                    if (!empty($user->deleted)) {
+                        continue;
+                    }
+                    context_helper::preload_from_record($user);
+                    $usercontext = context_user::instance($user->id, IGNORE_MISSING);                    
+                    self::validate_context($usercontext);
+                    $currentuser = ($user->id == $USER->id);
+                    if ($userarray  = user_get_user_details($user)) {
+                        $groupmembers_arr[$userarray["id"]]["id"] = $userarray["id"];
+                        $groupmembers_arr[$userarray["id"]]["name"] = $userarray["fullname"];
+                        $groupmembers_arr[$userarray["id"]]["profileimageurl"] = $userarray["profileimageurl"];
+                        $groupmembers_arr[$userarray["id"]]["profileimageurlsmall"] = $userarray["profileimageurlsmall"];
+                        $groupmembers_arr[$userarray["id"]]["lastaccess"] = $userarray["lastaccess"];                        
+                    }                    
+                }
+            }
+            //print_r($groupmembers_arr);
+            // print_r(array_keys($groupmembers));
+            $members[] = array('groupid'=>$groupid, 'userlist'=>$groupmembers_arr);
         }
 
         return $members;
@@ -406,7 +439,17 @@ class core_group_external extends external_api {
             new external_single_structure(
                 array(
                     'groupid' => new external_value(PARAM_INT, 'group record id'),
-                    'userids' => new external_multiple_structure(new external_value(PARAM_INT, 'user id')),
+                    'userlist' => new external_multiple_structure(
+                        new external_single_structure(
+                            array(
+                                'id' => new external_value(PARAM_INT, 'user id'),
+                                'name' => new external_value(PARAM_NOTAGS, 'The fullname of the user'),
+                                'profileimageurl' => new external_value(PARAM_URL, 'User image profile URL - small version'),
+                                'profileimageurlsmall' => new external_value(PARAM_URL, 'User image profile URL - big version'),
+                                'lastaccess' => new external_value(PARAM_INT, 'ulast access to the site (0 if never)', VALUE_OPTIONAL)
+                            )
+                        )
+                    ),
                 )
             )
         );
@@ -760,7 +803,7 @@ class core_group_external extends external_api {
             array(
                 'groupingids' => new external_multiple_structure(new external_value(PARAM_INT, 'grouping ID')
                         , 'List of grouping id. A grouping id is an integer.'),
-                'returngroups' => new external_value(PARAM_BOOL, 'return associated groups', VALUE_DEFAULT, 0)
+                'returngroups' => new external_value(PARAM_BOOL, 'return associated groups', VALUE_DEFAULT, 1)
             )
         );
     }
@@ -773,7 +816,7 @@ class core_group_external extends external_api {
      * @return array of grouping objects (id, courseid, name)
      * @since Moodle 2.3
      */
-    public static function get_groupings($groupingids, $returngroups = false) {
+    public static function get_groupings($groupingids, $returngroups = true) {
         global $CFG, $DB;
         require_once("$CFG->dirroot/group/lib.php");
         require_once("$CFG->libdir/filelib.php");
@@ -808,19 +851,24 @@ class core_group_external extends external_api {
             if ($params['returngroups']) {
                 $grouprecords = $DB->get_records_sql("SELECT * FROM {groups} g INNER JOIN {groupings_groups} gg ".
                                                "ON g.id = gg.groupid WHERE gg.groupingid = ? ".
-                                               "ORDER BY groupid", array($groupingid));
+                                               "ORDER BY groupid", array($groupingid));                
+
                 if ($grouprecords) {
                     $groups = array();
                     foreach ($grouprecords as $grouprecord) {
                         list($grouprecord->description, $grouprecord->descriptionformat) =
                         external_format_text($grouprecord->description, $grouprecord->descriptionformat,
                         $context->id, 'group', 'description', $grouprecord->groupid);
+                        $groupids = array();
+                        $groupids[] = $grouprecord->groupid;
+                        $members = self::get_group_members($groupids);
                         $groups[] = array('id' => $grouprecord->groupid,
                                           'name' => $grouprecord->name,
                                           'description' => $grouprecord->description,
                                           'descriptionformat' => $grouprecord->descriptionformat,
                                           'enrolmentkey' => $grouprecord->enrolmentkey,
-                                          'courseid' => $grouprecord->courseid
+                                          'courseid' => $grouprecord->courseid,
+                                          'userlist' => $members[0]["userlist"]
                                           );
                     }
                     $groupingarray['groups'] = $groups;
@@ -828,7 +876,6 @@ class core_group_external extends external_api {
             }
             $groupings[] = $groupingarray;
         }
-
         return $groupings;
     }
 
@@ -855,7 +902,18 @@ class core_group_external extends external_api {
                                 'name' => new external_value(PARAM_TEXT, 'multilang compatible name, course unique'),
                                 'description' => new external_value(PARAM_RAW, 'group description text'),
                                 'descriptionformat' => new external_format_value('description'),
-                                'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase')
+                                'enrolmentkey' => new external_value(PARAM_RAW, 'group enrol secret phrase'),
+                                'userlist' => new external_multiple_structure(
+                                     new external_single_structure(
+                                        array(
+                                            'id' => new external_value(PARAM_INT, 'user id'),
+                                            'name' => new external_value(PARAM_NOTAGS, 'The fullname of the user'),
+                                            'profileimageurl' => new external_value(PARAM_URL, 'User image profile URL - small version'),
+                                            'profileimageurlsmall' => new external_value(PARAM_URL, 'User image profile URL - big version'),
+                                            'lastaccess' => new external_value(PARAM_INT, 'ulast access to the site (0 if never)', VALUE_OPTIONAL)
+                                        )
+                                    )
+                                )
                             )
                         ),
                     'optional groups', VALUE_OPTIONAL)
@@ -1153,7 +1211,6 @@ class core_group_external extends external_api {
     public static function unassign_grouping_returns() {
         return null;
     }
-
 }
 
 /**
