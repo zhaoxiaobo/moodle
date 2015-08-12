@@ -131,7 +131,7 @@ class gradereport_user_external extends external_api {
             $report_count = count($report->tabledata);
             //add by zxb 对数据进行处理
             $grade_info_array = array();
-            $count = 0;
+            $count = $progress = 0;
             $couse_name = "";
             foreach ($report->tabledata as $key => $value) {
                 if(isset($value["leader"])){
@@ -149,16 +149,21 @@ class gradereport_user_external extends external_api {
                     $grade_info_array[$count]["range"] = $value["range"]["content"];
                     $grade_info_array[$count]["percentage"] = $value["percentage"]["content"];
                     $grade_info_array[$count]["feedback"] = $value["feedback"]["content"];   
-                    $count++;              
+                    $count++;
+                    if($value["grade"]["content"] == "-")
+                        $progress++;
                 }
             }
+            $progress_info = 1 - $progress/$count;
+            $progress_info = round($progress_info*100,2);
             $tables[] = array(
                 'courseid'      => $courseid,
                 'userid'        => $user->id,
                 'userfullname'  => fullname($user),
                 'maxdepth'      => $report->maxdepth,
                 'cousename'      => $couse_name,
-                'tabledata'     => $grade_info_array
+                'tabledata'     => $grade_info_array,
+                'progress'      => $progress_info
             );
 
         } else {
@@ -177,7 +182,7 @@ class gradereport_user_external extends external_api {
                 $report_count = count($report->tabledata);
                 //add by zxb 对数据进行处理
                 $grade_info_array = array();
-                $count = 0;
+                $count = $progress = 0;
                 $couse_name = "";
                 foreach ($report->tabledata as $key => $value) {
                     if(isset($value["leader"])){
@@ -195,17 +200,21 @@ class gradereport_user_external extends external_api {
                         $grade_info_array[$count]["range"] = $value["range"]["content"];
                         $grade_info_array[$count]["percentage"] = $value["percentage"]["content"];
                         $grade_info_array[$count]["feedback"] = $value["feedback"]["content"];   
-                        $count++;              
+                        $count++;
+                        if($value["grade"]["content"] == "-")
+                            $progress++;          
                     }
                 }
-
+                $progress_info = 1 - $progress/$count;
+                $progress_info = round($progress_info*100,2);
                 $tables[] = array(
                     'courseid'      => $courseid,
                     'userid'        => $currentuser->id,
                     'userfullname'  => fullname($currentuser),
                     'maxdepth'      => $report->maxdepth,
                     'cousename'     => $couse_name,
-                    'tabledata'     => $grade_info_array
+                    'tabledata'     => $grade_info_array,
+                    'progress'      => $progress_info
                     
                 );
             }
@@ -215,6 +224,7 @@ class gradereport_user_external extends external_api {
         $result = array();
         $result['data'] = $tables;
         $result['warnings'] = $warnings;
+
         return $result;
     }
 
@@ -249,6 +259,7 @@ class gradereport_user_external extends external_api {
                             'userfullname' => new external_value(PARAM_TEXT, 'user fullname'),
                             'maxdepth'   => new external_value(PARAM_INT, 'table max depth (needed for printing it)'),
                             'cousename' => new external_value(PARAM_TEXT, 'course name'),
+                            'progress' => new external_value(PARAM_FLOAT, 'course progress'),
                             // 'tabledata' => new external_multiple_structure(
                             //     new external_single_structure(
                             //         array(
