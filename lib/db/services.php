@@ -1952,7 +1952,7 @@ $services = array(
             'core_get_component_strings',
             'core_user_add_user_device',
             'core_user_get_users_by_id',
-            'core_user_update_users',            
+            'core_user_update_users',
             'core_calendar_get_calendar_events',
             'local_get_verification_code',
             'moodle_course_get_courses',
