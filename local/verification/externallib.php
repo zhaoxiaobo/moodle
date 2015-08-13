@@ -28,7 +28,7 @@ class local_verification_external extends external_api {
         $transaction = $DB->start_delegated_transaction();
 
         //获取用户信息
-        $sql = ' deleted = 0 AND id = :id';
+        $sql = ' deleted = 0 AND phone2 = :phone2';
         $sqlparams = array();
         $sqlparams["phone2"] = $phone;
         $users = $DB->get_records_select('user', $sql, $sqlparams, 'id ASC');

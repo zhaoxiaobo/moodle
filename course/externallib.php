@@ -79,7 +79,7 @@ class core_course_external extends external_api {
      * @since Moodle 2.2
      */
     public static function get_course_contents($courseid, $options = array()) {
-        global $CFG, $DB;
+        global $CFG, $DB, $USER;
         require_once($CFG->dirroot . "/course/lib.php");
 
         //validate parameter
@@ -162,6 +162,7 @@ class core_course_external extends external_api {
 
             //for each sections (first displayed to last displayed)
             $modinfosections = $modinfo->get_sections();
+
             foreach ($sections as $key => $section) {
 
                 if (!$section->uservisible) {
@@ -200,7 +201,8 @@ class core_course_external extends external_api {
                 //add by zxb 剔除课程简介中的html标签  
                 $sectionvalues['summary'] = strip_tags($sectionvalues['summary']);
                 $arr= array("\n", "\r", "\r\n");
-                $sectionvalues['summary'] = str_replace($arr,"",$sectionvalues['summary']);
+                //$sectionvalues['summary'] = str_replace($arr,"",$sectionvalues['summary']);
+                $sectionvalues['summary'] = $sectionvalues['summary'];
                 //剔除结束
                 $sectioncontents = array();
 
@@ -208,7 +210,6 @@ class core_course_external extends external_api {
                 if (empty($filters['excludemodules']) and !empty($modinfosections[$section->section])) {
                     foreach ($modinfosections[$section->section] as $cmid) {
                         $cm = $modinfo->cms[$cmid];
-
                         // stop here if the module is not visible to the user
                         if (!$cm->uservisible) {
                             continue;
@@ -239,9 +240,21 @@ class core_course_external extends external_api {
                                 }
                             }
                         }
-
+                        // add by zxb grade info
+                        $grade = 0;
+                        $sql = "SELECT cm.finalgrade
+                                  FROM {grade_grades} cm
+                                       JOIN {grade_items} m ON m.id = cm.itemid                                       
+                                 WHERE cm.userid = ? AND m.courseid = ? AND m.itemtype = 'mod' AND m.itemmodule = ? AND m.iteminstance = ?
+                              GROUP BY cm.id";
+                        $grade_arr = $DB->get_records_sql($sql, array($USER->id, $params['courseid'], $cm->modname, $cm->instance));
+                        if($grade_arr){
+                            $grade_arr = array_values($grade_arr);
+                            $grade = $grade_arr[0] -> finalgrade;
+                        }else{
+                            $grade = '-';
+                        }
                         $module = array();
-
                         //common info (for people being able to see the module or availability dates)
                         $module['id'] = $cm->id;
                         $module['name'] = format_string($cm->name, true);
@@ -249,8 +262,16 @@ class core_course_external extends external_api {
                         $module['modname'] = $cm->modname;
                         $module['modplural'] = $cm->modplural;
                         $module['modicon'] = $cm->get_icon_url()->out(false);
-                        $module['indent'] = $cm->indent;
-
+                        $module['indent'] = $cm->indent;                        
+                        $module['grade'] = $grade;
+                        // add by zxb forum reply count
+                        $numreplies = 0;
+                        if($cm->modname == "forum"){
+                            $sql = "SELECT COUNT(d.id)
+                                      FROM {forum_discussions} d                                           
+                                     WHERE d.forum = ?";
+                            $module['numreplies'] = $DB->get_field_sql($sql, array($cm->instance));                            
+                        }
                         $modcontext = context_module::instance($cm->id);
 
                         if (!empty($cm->showdescription) or $cm->modname == 'label') {
@@ -310,7 +331,7 @@ class core_course_external extends external_api {
                     break;
                 }
             }
-        }
+        }        
         return $coursecontents;
     }
 
@@ -343,6 +364,8 @@ class core_course_external extends external_api {
                                 'modplural' => new external_value(PARAM_TEXT, 'activity module plural name'),
                                 'availability' => new external_value(PARAM_RAW, 'module availability settings', VALUE_OPTIONAL),
                                 'indent' => new external_value(PARAM_INT, 'number of identation in the site'),
+                                'numreplies' => new external_value(PARAM_RAW, 'Raw forum topic, will be used when type is forum', VALUE_OPTIONAL),
+                                'grade' => new external_value(PARAM_RAW, 'grade info , the value will be ‘-’ when mod has not grade'),
                                 'contents' => new external_multiple_structure(
                                     new external_single_structure(
                                         array(
@@ -355,8 +378,7 @@ class core_course_external extends external_api {
                                             'content' => new external_value(PARAM_RAW, 'Raw content, will be used when type is content', VALUE_OPTIONAL),
                                             'timecreated' => new external_value(PARAM_INT, 'Time created'),
                                             'timemodified' => new external_value(PARAM_INT, 'Time modified'),
-                                            'sortorder' => new external_value(PARAM_INT, 'Content sort order'),
-
+                                            'sortorder' => new external_value(PARAM_INT, 'Content sort order'),                                            
                                             // copyright related info
                                             'userid' => new external_value(PARAM_INT, 'User who added this content to moodle'),
                                             'author' => new external_value(PARAM_TEXT, 'Content owner'),
