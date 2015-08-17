@@ -119,14 +119,33 @@ class local_report_external extends external_api {
 
                     $result[$sectionnum]["data"][$count]["lastaccess"] = $lastaccesscell -> text;
                 }
+
+                // add by zxb grade info
+                $grade = 0;
+                $sql = "SELECT cm.finalgrade
+                          FROM {grade_grades} cm
+                               JOIN {grade_items} m ON m.id = cm.itemid                                       
+                         WHERE cm.userid = ? AND m.courseid = ? AND m.itemtype = 'mod' AND m.itemmodule = ? AND m.iteminstance = ?
+                      GROUP BY cm.id";
+                $grade_arr = $DB->get_records_sql($sql, array($USER->id, $courseid, $cm->modname, $cm->instance));
+                if($grade_arr){
+                    $grade_arr = array_values($grade_arr);
+                    $grade = $grade_arr[0] -> finalgrade;
+                }else{
+                    $grade = '-';
+                }
+                $result[$sectionnum]["data"][$count]["grade"] = $grade;
+                // add by zxb forum reply count
+                $numreplies = 0;
+                if($cm->modname == "forum"){
+                    $sql = "SELECT COUNT(d.id)
+                              FROM {forum_discussions} d                                           
+                             WHERE d.forum = ?";
+                    $result[$sectionnum]["data"][$count]["numreplies"] = $DB->get_field_sql($sql, array($cm->instance));                            
+                }
             $count++;
             }
         }
-
-// print_r($result);
-//         $result1 = array();
-//         $result1[0]["id"]=$courseid;
-//         $result1[1]["id"]='2';
         return $result;
     }
 
@@ -146,6 +165,8 @@ class local_report_external extends external_api {
                                 'numviews' => new external_value(PARAM_RAW, 'numviews info'),
                                 'blog' => new external_value(PARAM_RAW, 'blog info'),
                                 'lastaccess' => new external_value(PARAM_TEXT, 'lastaccess info'),
+                                'numreplies' => new external_value(PARAM_RAW, 'Raw forum topic, will be used when type is forum', VALUE_OPTIONAL),
+                                'grade' => new external_value(PARAM_RAW, 'grade info , the value will be ‘-’ when mod has not grade'),
                             )
                         )
                     )

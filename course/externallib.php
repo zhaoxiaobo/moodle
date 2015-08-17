@@ -272,8 +272,19 @@ class core_course_external extends external_api {
                                      WHERE d.forum = ?";
                             $module['numreplies'] = $DB->get_field_sql($sql, array($cm->instance));                            
                         }
+                        // add by zxb report for study
+                        $modname = 'view '.$cm->modname;
+                        $sql = "SELECT d.time
+                                      FROM {log} d                                           
+                                     WHERE d.module = ? AND d.userid = ? AND d.course = ? AND d.module = ? AND d.cmid = ?
+                                     ORDER BY d.time DESC";
+                        $viewtime = $DB->get_field_sql($sql, array($cm->modname, $USER->id, $params['courseid'], $cm->modname, $cm->id)); 
+                        if(!empty($viewtime)){
+                            $module['viewtime'] = $viewtime;
+                        }else{
+                            $module['viewtime'] = 0;
+                        }
                         $modcontext = context_module::instance($cm->id);
-
                         if (!empty($cm->showdescription) or $cm->modname == 'label') {
                             // We want to use the external format. However from reading get_formatted_content(), $cm->content format is always FORMAT_HTML.
                             list($module['description'], $descriptionformat) = external_format_text($cm->content,
@@ -305,7 +316,7 @@ class core_course_external extends external_api {
                         $getcontentfunction = $cm->modname.'_export_contents';
                         if (function_exists($getcontentfunction)) {
                             if (empty($filters['excludecontents']) and $contents = $getcontentfunction($cm, $baseurl)) {
-                                $module['contents'] = $contents;
+                                $module['contents'] = $contents;                                
                             } else {
                                 $module['contents'] = array();
                             }
@@ -331,7 +342,9 @@ class core_course_external extends external_api {
                     break;
                 }
             }
-        }        
+        }
+        // print_r($coursecontents); 
+        // exit;
         return $coursecontents;
     }
 
@@ -366,6 +379,7 @@ class core_course_external extends external_api {
                                 'indent' => new external_value(PARAM_INT, 'number of identation in the site'),
                                 'numreplies' => new external_value(PARAM_RAW, 'Raw forum topic, will be used when type is forum', VALUE_OPTIONAL),
                                 'grade' => new external_value(PARAM_RAW, 'grade info , the value will be ‘-’ when mod has not grade'),
+                                'viewtime' => new external_value(PARAM_INT, 'Time learn'),
                                 'contents' => new external_multiple_structure(
                                     new external_single_structure(
                                         array(
