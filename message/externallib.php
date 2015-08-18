@@ -678,10 +678,10 @@ class core_message_external extends external_api {
         }
 
         // Check if the current user is the sender/receiver or just a privileged user.
-        if ($useridto != $USER->id and $useridfrom != $USER->id and
-             !has_capability('moodle/site:readallmessages', $context)) {
-            throw new moodle_exception('accessdenied', 'admin');
-        }
+        // if ($useridto != $USER->id and $useridfrom != $USER->id and
+        //      !has_capability('moodle/site:readallmessages', $context)) {
+        //     throw new moodle_exception('accessdenied', 'admin');
+        // }
 
         // Which type of messages to retrieve.
         $notifications = -1;
