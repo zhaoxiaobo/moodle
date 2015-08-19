@@ -576,6 +576,7 @@ class core_cohort_external extends external_api {
     }
 
     /**
+     * add by zxb 对该函数进行调整，参数有了改变
      * Returns description of method parameters
      *
      * @return external_function_parameters
@@ -584,7 +585,7 @@ class core_cohort_external extends external_api {
     public static function get_cohort_members_parameters() {
         return new external_function_parameters(
             array(
-                'cohortids' => new external_multiple_structure(new external_value(PARAM_INT, 'Cohort ID')),
+                'userids' => new external_multiple_structure(new external_value(PARAM_INT, 'User ID')),
             )
         );
     }
@@ -592,33 +593,35 @@ class core_cohort_external extends external_api {
     /**
      * Return all members for a cohort
      *
-     * @param array $cohortids array of cohort ids
+     * @param array $userids array of user ids
      * @return array with cohort id keys containing arrays of user ids
      * @since Moodle 2.5
      */
-    public static function get_cohort_members($cohortids) {
-        global $DB;
-        $params = self::validate_parameters(self::get_cohort_members_parameters(), array('cohortids' => $cohortids));
+    public static function get_cohort_members($userids) {
+        global $CFG,$DB;
+        require_once($CFG->dirroot . "/user/lib.php");
+        $params = self::validate_parameters(self::get_cohort_members_parameters(), array('userids' => $userids));
+        $members = $member = array();
+        foreach ($params['userids'] as $userid) {
+            $cohorts=$DB->get_records_sql("SELECT u.cohortid FROM {cohort_members} u
+                WHERE  u.userid = ?", array($userid));
+            foreach ($cohorts as  $cohortid) {
+                $cohortmembers = $DB->get_records_sql("SELECT u.*  FROM {user} u, {cohort_members} cm
+                    WHERE u.id = cm.userid AND cm.cohortid = ?
+                    ORDER BY lastname ASC, firstname ASC", array($cohortid->cohortid));
+                foreach ($cohortmembers as $key => $value) {                    
+                    $userarray  = user_get_user_details($value);
+                    if(!array_key_exists($key , $member)){
+                        $member[$key]["id"] = $userarray["id"];
+                        $member[$key]["name"] = $userarray["fullname"];
+                        $member[$key]["profileimageurl"] = $userarray["profileimageurl"];
+                        $member[$key]["profileimageurlsmall"] = $userarray["profileimageurlsmall"];
+                        $member[$key]["lastaccess"] = $userarray["lastaccess"];  
+                    }
+                }
 
-        $members = array();
-
-        foreach ($params['cohortids'] as $cohortid) {
-            // Validate params.
-            $cohort = $DB->get_record('cohort', array('id' => $cohortid), '*', MUST_EXIST);
-            // Now security checks.
-            $context = context::instance_by_id($cohort->contextid, MUST_EXIST);
-            if ($context->contextlevel != CONTEXT_COURSECAT and $context->contextlevel != CONTEXT_SYSTEM) {
-                throw new invalid_parameter_exception('Invalid context');
             }
-            self::validate_context($context);
-            if (!has_any_capability(array('moodle/cohort:manage', 'moodle/cohort:view'), $context)) {
-                throw new required_capability_exception($context, 'moodle/cohort:view', 'nopermissions', '');
-            }
-
-            $cohortmembers = $DB->get_records_sql("SELECT u.id FROM {user} u, {cohort_members} cm
-                WHERE u.id = cm.userid AND cm.cohortid = ?
-                ORDER BY lastname ASC, firstname ASC", array($cohort->id));
-            $members[] = array('cohortid' => $cohortid, 'userids' => array_keys($cohortmembers));
+            $members[] = array('userlist' => $member);
         }
         return $members;
     }
@@ -633,8 +636,17 @@ class core_cohort_external extends external_api {
         return new external_multiple_structure(
             new external_single_structure(
                 array(
-                    'cohortid' => new external_value(PARAM_INT, 'cohort record id'),
-                    'userids' => new external_multiple_structure(new external_value(PARAM_INT, 'user id')),
+                    'userlist' => new external_multiple_structure(
+                        new external_single_structure(
+                            array(
+                                'id' => new external_value(PARAM_INT, 'user id'),
+                                'name' => new external_value(PARAM_NOTAGS, 'The fullname of the user'),
+                                'profileimageurl' => new external_value(PARAM_URL, 'User image profile URL - small version'),
+                                'profileimageurlsmall' => new external_value(PARAM_URL, 'User image profile URL - big version'),
+                                'lastaccess' => new external_value(PARAM_INT, 'ulast access to the site (0 if never)', VALUE_OPTIONAL)
+                            )
+                        )
+                    ),
                 )
             )
         );
