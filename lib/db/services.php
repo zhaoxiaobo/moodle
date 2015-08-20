@@ -985,6 +985,7 @@ $services = array(
             'gradereport_overview_view_grade_report',
             'local_get_report_by_course_id',
             'core_message_get_messages',
+            'core_message_send_instant_messages',
             'core_cohort_get_cohort_members'),
         'enabled' => 0,
         'restrictedusers' => 0,
