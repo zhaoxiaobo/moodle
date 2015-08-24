@@ -609,14 +609,22 @@ class core_cohort_external extends external_api {
                 $cohortmembers = $DB->get_records_sql("SELECT u.*  FROM {user} u, {cohort_members} cm
                     WHERE u.id = cm.userid AND cm.cohortid = ?
                     ORDER BY lastname ASC, firstname ASC", array($cohortid->cohortid));
-                foreach ($cohortmembers as $key => $value) {                    
-                    $userarray  = user_get_user_details($value);
+                foreach ($cohortmembers as $key => $value) {           
+                    //$userarray  = user_get_user_details($value);
                     if(!array_key_exists($key , $member)){
-                        $member[$key]["id"] = $userarray["id"];
-                        $member[$key]["name"] = $userarray["fullname"];
-                        $member[$key]["profileimageurl"] = $userarray["profileimageurl"];
-                        $member[$key]["profileimageurlsmall"] = $userarray["profileimageurlsmall"];
-                        $member[$key]["lastaccess"] = $userarray["lastaccess"];  
+                        // $member[$key]["id"] = $userarray["id"];
+                        // $member[$key]["name"] = $userarray["fullname"];
+                        // $member[$key]["profileimageurl"] = $userarray["profileimageurl"];
+                        // $member[$key]["profileimageurlsmall"] = $userarray["profileimageurlsmall"];
+                        // $member[$key]["lastaccess"] = $userarray["lastaccess"];  
+
+                        $member[$key]["id"] = $value -> id;
+                        $member[$key]["name"] = $value -> lastname . $value -> firstname;
+                        $profileimageurl = moodle_url::make_pluginfile_url($value -> id, 'user', 'icon', NULL, '/', 'f1');
+                        $member[$key]["profileimageurl"] = $profileimageurl->out(false);
+                        $profileimageurlsmall = moodle_url::make_pluginfile_url($value -> id, 'user', 'icon', NULL, '/', 'f2');
+                        $member[$key]["profileimageurlsmall"] = $profileimageurlsmall->out(false);                        
+                        $member[$key]["lastaccess"] = $value -> lastaccess;  
                     }
                 }
 
