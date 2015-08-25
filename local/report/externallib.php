@@ -23,10 +23,10 @@ class local_report_external extends external_api {
 
         $params = self::validate_parameters(self::get_report_by_course_id_parameters(),
                 array('courseid' => $courseid));
-                $course = $DB->get_record('course', array('id'=>$courseid), '*', MUST_EXIST);
-        require_login($course);
+        $course = $DB->get_record('course', array('id'=>$courseid), '*', MUST_EXIST);
+        //require_login($course);
         $context = context_course::instance($course->id);
-        require_capability('report/outline:view', $context);
+        //require_capability('report/outline:view', $context);
         $showlastaccess = true;
         $hiddenfields = explode(',', $CFG->hiddenuserfields);
 
