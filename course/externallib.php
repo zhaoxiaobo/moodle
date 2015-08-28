@@ -316,6 +316,15 @@ class core_course_external extends external_api {
                         $getcontentfunction = $cm->modname.'_export_contents';
                         if (function_exists($getcontentfunction)) {
                             if (empty($filters['excludecontents']) and $contents = $getcontentfunction($cm, $baseurl)) {
+                                
+                                foreach ($contents as $key => $value) {
+                                    // $begin = stripos($value["fileurl"],'pluginfile.php/');
+                                    // $end = stripos($value["fileurl"],'/mod_resource/');
+                                    // $string = substr($value["fileurl"] , $begin);
+                                    $string_begin = explode('pluginfile.php/',$value["fileurl"]);
+                                    $string_end = explode('/mod_resource/',$string_begin[1]);
+                                    $contents[$key]["fileid"] = $string_end[0];
+                                }
                                 $module['contents'] = $contents;                                
                             } else {
                                 $module['contents'] = array();
@@ -384,6 +393,7 @@ class core_course_external extends external_api {
                                     new external_single_structure(
                                         array(
                                             // content info
+                                            'fileid' => new external_value(PARAM_TEXT, 'id file'), 
                                             'type'=> new external_value(PARAM_TEXT, 'a file or a folder or external link'),
                                             'filename'=> new external_value(PARAM_FILE, 'filename'),
                                             'filepath'=> new external_value(PARAM_PATH, 'filepath'),
