@@ -220,7 +220,10 @@ if (!empty($user)) {
 
     $usertoken = new stdClass;
     $usertoken->token = $token->token;
-    echo json_encode($usertoken);
+    if(!isset($_REQUEST["type"])) {
+        echo json_encode($usertoken);
+    }
+
 } else {
     throw new moodle_exception('usernamenotfound', 'moodle');
 }
