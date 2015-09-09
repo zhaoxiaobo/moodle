@@ -18,16 +18,13 @@ if(strlen($phone) != 11){
         $users_info = (array)$users[$userid];
         //发送手机短信
         $url="http://ysy.crtvup.com.cn/userCenter/SingleVersion?itname=phonevalidate&phone=".$phone."&udid=1234344&sendtype=3";
-        // $opts = array( 
-        //     'http'=>array( 
-        //     'method'=>'GET', 
-        //     'timeout'=>60, 
-        //     ) 
-        // ); 
-        // $context = stream_context_create($opts); 
-        // $con =file_get_contents($url, false, $context); 
-
-        $con = file_get_contents($url);
+        //$url="http://172.19.42.53:5000/userCenter/SingleVersion?itname=phonevalidate&phone=".$phone."&udid=1234344&sendtype=3";
+        $ch = curl_init ();
+        curl_setopt ( $ch, CURLOPT_URL, $url);
+        curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1); 
+        $con = curl_exec ( $ch );
+        curl_close ( $ch );
+        //$con = file_get_contents($url);
         $conten_arr = (array)json_decode($con);
         if ($conten_arr["status"] == "1") {
             $code = $conten_arr["code"];
