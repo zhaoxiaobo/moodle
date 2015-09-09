@@ -37,18 +37,11 @@ class local_verification_external extends external_api {
             $users_info = (array)$users[$userid];
             $phone = $users_info["phone2"];
             //发送手机短信
-            $url="http://172.19.42.53:5000/userCenter/SingleVersion?itname=phonevalidate&phone=$phone&udid=1234344&sendtype=3";
+            $url="http://ysy.crtvup.com.cn/userCenter/SingleVersion?itname=phonevalidate&phone=$phone&udid=1234344&sendtype=3";
             $con = file_get_contents($url);
             $conten_arr = (array)json_decode($con);
             if ($conten_arr["status"] == "1") {
                 $code = $conten_arr["code"];
-                //===========更新用户表================
-                // $userinfo=array();
-                // $userinfo["id"]=$params["userid"];
-                // $userinfo["verification_code"]=$code;
-                // user_update_user($userinfo);
-                //===========记录用户更新日志==========
-                $transaction->allow_commit();
                 //===========返回结果集================
                 $result=array();
                 $result["code"]=$code;
