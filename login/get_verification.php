@@ -16,18 +16,31 @@ if(strlen($phone) != 11){
     if($users)
     {
         $users_info = (array)$users[$userid];
-        $phone = $users_info["phone2"];
         //发送手机短信
-        // $url="http://172.19.42.53:5000/userCenter/SingleVersion?itname=phonevalidate&phone=$phone&udid=1234344&sendtype=3";
-        // $con = file_get_contents($url);
-        // $conten_arr = (array)json_decode($con);
-        // if ($conten_arr["status"] == "1") {
-        //     $code = $conten_arr["code"];
-        //     //===========返回结果集================            
-        //     $result["code"]=$code;
-        $code = rand(1000 , 9999);
-        if($code != ""){
-            $result["code"] = $code;
+        $url="http://ysy.crtvup.com.cn/userCenter/SingleVersion?itname=phonevalidate&phone=".$phone."&udid=1234344&sendtype=3";
+        // $opts = array( 
+        //     'http'=>array( 
+        //     'method'=>'GET', 
+        //     'timeout'=>60, 
+        //     ) 
+        // ); 
+        // $context = stream_context_create($opts); 
+        // $con =file_get_contents($url, false, $context); 
+
+        $con = file_get_contents($url);
+        $conten_arr = (array)json_decode($con);
+        if ($conten_arr["status"] == "1") {
+            $code = $conten_arr["code"];
+            //===========返回结果集================            
+            $result["code"]=$code;
+            //$code = rand(1000 , 9999);
+            if($code != ""){
+                $result["code"] = $code;
+            }else{
+                $result["exception"] = "verification";
+                $result["errorcode"] = "code get failure";
+                $result["message"] = "验证码信息为空";
+            }
         }else{
             $result["exception"] = "verification";
             $result["errorcode"] = "code get failure";
