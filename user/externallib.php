@@ -334,7 +334,7 @@ class core_user_external extends external_api {
 
         // Ensure the current user is allowed to run this function
         $context = context_system::instance();
-        require_capability('moodle/user:update', $context);
+        //require_capability('moodle/user:update', $context);
         self::validate_context($context);
 
         $params = self::validate_parameters(self::update_users_parameters(), array('users'=>$users));
