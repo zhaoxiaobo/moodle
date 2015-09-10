@@ -44,7 +44,13 @@ if (!webservice_protocol_is_enabled('rest')) {
 }
 
 $courses = $DB->get_records('course');
-
+foreach($courses as $course) {
+    $context = context_course::instance($course->id, IGNORE_MISSING);
+    list($enrolledsqlselect, $enrolledparams) = get_enrolled_sql($context);
+    $enrolledsql = "SELECT COUNT('x') FROM ($enrolledsqlselect) enrolleduserids";
+    $enrolledusercount = $DB->count_records_sql($enrolledsql, $enrolledparams);
+    $course->usercount = $enrolledusercount;
+}
 
 echo json_encode($courses);die();
 
