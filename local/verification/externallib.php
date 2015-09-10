@@ -18,39 +18,28 @@ class local_verification_external extends external_api {
      * @return array verification code
      */
     public static function get_verification_code($phone) {
-        global $USER,$DB,$CFG,$serverIP;
-        require_once($CFG->dirroot."/user/lib.php");
-        require_once($CFG->dirroot."/user/profile/lib.php");
+        global $USER,$DB;
 
         $params = self::validate_parameters(self::get_verification_code_parameters(),
             array('phone' => $phone));
+        //发送手机短信
+        $url="http://ysy.crtvup.com.cn/userCenter/SingleVersion?itname=phonevalidate&phone=".$phone."&udid=1234344&sendtype=3";
+        //$url="http://172.19.42.53:5000/userCenter/SingleVersion?itname=phonevalidate&phone=".$phone."&udid=1234344&sendtype=3";
+        $ch = curl_init ();
+        curl_setopt ( $ch, CURLOPT_URL, $url);
+        curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1); 
+        $con = curl_exec ( $ch );
+        curl_close ( $ch );
 
-        $transaction = $DB->start_delegated_transaction();
-
-        //获取用户信息
-        $sql = ' deleted = 0 AND phone2 = :phone2';
-        $sqlparams = array();
-        $sqlparams["phone2"] = $phone;
-        $users = $DB->get_records_select('user', $sql, $sqlparams, 'id ASC');
-        if($users)
-        {
-            $users_info = (array)$users[$userid];
-            //发送手机短信
-            $url="http://ysy.crtvup.com.cn/userCenter/SingleVersion?itname=phonevalidate&phone=$phone&udid=1234344&sendtype=3";
-            $con = file_get_contents($url);
-            $conten_arr = (array)json_decode($con);
-            if ($conten_arr["status"] == "1") {
-                $code = $conten_arr["code"];
-                $transaction->allow_commit();
-                //===========返回结果集================
-                $result=array();
-                $result["code"]=$code;
-                return $result;
-            }else{
-                throw new moodle_exception('Failed to send text messages', 'error');
-            }
+        $conten_arr = (array)json_decode($con);
+        if ($conten_arr["status"] == "1") {
+            $code = $conten_arr["code"];
+            //===========返回结果集================
+            $result=array();
+            $result["code"]=$code;
+            return $result;
         }else{
-            throw new moodle_exception('Users do not exist', 'error');
+            throw new moodle_exception('Failed to send text messages', 'error');
         }
     }
 
