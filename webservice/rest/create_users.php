@@ -52,15 +52,15 @@ require_once($CFG->dirroot."/user/profile/lib.php"); //required for customfields
 // Do basic automatic PARAM checks on incoming data, using params description
 // If any problems are found then exceptions are thrown with helpful error messages
 //$params = self::validate_parameters(self::create_users_parameters(), array('users'=>$users));
-//$users = $_REQUEST;
+$user = $_REQUEST;
 
-$user['username']= '11111';
+/*$user['username']= '11111';
 $user['password']= "mima@d349W";
 $user['firstname']= "ceshi";
 $user['lastname']= 'ceshi';
 $user['email']= 'ceshi@founder.com';
 $user['mnethostid'] = 0;
-$user['idnumber']= 'teacher';
+$user['idnumber']= 'teacher';*/
 
 $availableauths  = core_component::get_plugin_list('auth');
 unset($availableauths['mnet']);       // these would need mnethostid too
@@ -77,9 +77,6 @@ $userids = array();
     if ($DB->record_exists('user', array('username'=>$user['username'], 'mnethostid'=>$CFG->mnet_localhost_id))) {
         throw new invalid_parameter_exception('Username already exists: '.$user['username']);
     }
-
-
-
 
 
     // Make sure lang is valid
@@ -99,6 +96,7 @@ $userids = array();
     // Start of user info validation.
     // Lets make sure we validate current user info as handled by current GUI. see user/editadvanced_form.php function validation()
     if ($DB->record_exists('user', array('email'=>$user['email'], 'mnethostid'=>$user['mnethostid']))) {
+
         throw new invalid_parameter_exception('Email address already exists: '.$user['email']);
     }
     // End of user info validation.
