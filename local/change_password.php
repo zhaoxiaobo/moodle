@@ -1,9 +1,7 @@
 <?php
 require('../config.php');
 require_once($CFG->libdir.'/authlib.php');
-require_once(__DIR__ . '/lib.php');
-require_once('forgot_password_form.php');
-require_once('set_password_form.php');
+
 
 error_reporting(3);
 $result = array();
@@ -11,6 +9,7 @@ if(isset($_REQUEST["password"]))
     $password = $_REQUEST["password"];
 if(isset($_REQUEST["phone"]))
     $phone = $_REQUEST["phone"];
+
 if ($phone && $password) {
     //获取用户数据
     $userparams = array('phone2' => $phone, 'mnethostid' => $CFG->mnet_localhost_id, 'deleted' => 0, 'suspended' => 0);
