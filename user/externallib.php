@@ -364,11 +364,15 @@ class core_user_external extends external_api {
                 }
             }
         }
+        $commitResult = $transaction->allow_commit();
+        if($commitResult == ""){
+            $result=array();
+            $result["result"]='true';
+            return $result;
+        }else{
+            throw new moodle_exception('Failed to update user info', 'error');
+        }
 
-        $transaction->allow_commit();
-        $result=array();
-        $result["result"]='true';
-        return $result;
     }
 
     /**
