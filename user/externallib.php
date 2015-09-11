@@ -365,7 +365,7 @@ class core_user_external extends external_api {
             }
         }
 
-        //$transaction->allow_commit();
+        $transaction->allow_commit();
         $result=array();
         $result["result"]='true';
         return $result;
