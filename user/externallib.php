@@ -715,6 +715,18 @@ class core_user_external extends external_api {
             $currentuser = ($user->id == $USER->id);
 
             if ($userarray  = user_get_user_details($user)) {
+                $userarray['phone1'] = in_array('phone1', $userarray)?$userarray['phone1']:'';
+                $userarray['phone2'] = in_array('phone2', $userarray)?$userarray['phone2']:'';
+                $userarray['address'] = in_array('address', $userarray)?$userarray['address']:'';
+                $userarray['icq'] = in_array('icq', $userarray)?$userarray['icq']:'';
+                $userarray['skype'] = in_array('skype', $userarray)?$userarray['yahoo']:'';
+                $userarray['yahoo'] = in_array('yahoo', $userarray)?$userarray['address']:'';
+                $userarray['aim'] = in_array('aim', $userarray)?$userarray['aim']:'';
+                $userarray['msn'] = in_array('msn', $userarray)?$userarray['msn']:'';
+                $userarray['department'] = in_array('department', $userarray)?$userarray['department']:'';
+                $userarray['institution'] = in_array('institution', $userarray)?$userarray['institution']:'';
+                $userarray['idnumber'] = in_array('idnumber', $userarray)?$userarray['idnumber']:'';
+                $userarray['interests'] = in_array('interests', $userarray)?$userarray['interests']:'';
                 //fields matching permissions from /user/editadvanced.php
                 if ($currentuser or $hasuserupdatecap) {
                     $userarray['auth']       = $user->auth;
