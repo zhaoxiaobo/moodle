@@ -365,7 +365,7 @@ class core_user_external extends external_api {
             }
         }
 
-        $transaction->allow_commit();
+        //$transaction->allow_commit();
         $result=array();
         $result["result"]='true';
         return $result;
@@ -715,18 +715,18 @@ class core_user_external extends external_api {
             $currentuser = ($user->id == $USER->id);
 
             if ($userarray  = user_get_user_details($user)) {
-                $userarray['phone1'] = in_array('phone1', $userarray)?$userarray['phone1']:'';
-                $userarray['phone2'] = in_array('phone2', $userarray)?$userarray['phone2']:'';
-                $userarray['address'] = in_array('address', $userarray)?$userarray['address']:'';
-                $userarray['icq'] = in_array('icq', $userarray)?$userarray['icq']:'';
-                $userarray['skype'] = in_array('skype', $userarray)?$userarray['yahoo']:'';
-                $userarray['yahoo'] = in_array('yahoo', $userarray)?$userarray['address']:'';
-                $userarray['aim'] = in_array('aim', $userarray)?$userarray['aim']:'';
-                $userarray['msn'] = in_array('msn', $userarray)?$userarray['msn']:'';
-                $userarray['department'] = in_array('department', $userarray)?$userarray['department']:'';
-                $userarray['institution'] = in_array('institution', $userarray)?$userarray['institution']:'';
-                $userarray['idnumber'] = in_array('idnumber', $userarray)?$userarray['idnumber']:'';
-                $userarray['interests'] = in_array('interests', $userarray)?$userarray['interests']:'';
+                $userarray['phone1'] = isset($userarray['phone1'])?$userarray['phone1']:$user->phone1;
+                $userarray['phone2'] = isset($userarray['phone2'])?$userarray['phone2']:$user->phone2;
+                $userarray['address'] = isset($userarray['address'])?$userarray['address']:$user->address;
+                $userarray['icq'] = isset($userarray['icq'])?$userarray['icq']:$user->icq;
+                $userarray['skype'] = isset($userarray['skype'])?$userarray['skype']:$user->skype;
+                $userarray['yahoo'] = isset($userarray['yahoo'])?$userarray['yahoo']:$user->yahoo;
+                $userarray['aim'] = isset($userarray['aim'])?$userarray['aim']:$user->aim;
+                $userarray['msn'] = isset($userarray['msn'])?$userarray['msn']:$user->msn;
+                $userarray['department'] = isset($userarray['department'])?$userarray['department']:$user->department;
+                $userarray['institution'] = isset($userarray['institution'])?$userarray['institution']:$user->institution;
+                $userarray['idnumber'] = isset($userarray['idnumber'])?$userarray['idnumber']:$user->idnumber;
+                $userarray['interests'] = isset($userarray['interests'])?$userarray['interests']:$user->interests;
                 //fields matching permissions from /user/editadvanced.php
                 if ($currentuser or $hasuserupdatecap) {
                     $userarray['auth']       = $user->auth;
