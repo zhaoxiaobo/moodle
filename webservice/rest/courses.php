@@ -50,6 +50,22 @@ foreach($courses as $course) {
     $enrolledsql = "SELECT COUNT('x') FROM ($enrolledsqlselect) enrolleduserids";
     $enrolledusercount = $DB->count_records_sql($enrolledsql, $enrolledparams);
     $course->usercount = $enrolledusercount;
+
+    $sql = "select u.id,u.firstname ,u.lastname from {role_assignments} mra
+			LEFT JOIN
+			{role} r
+			on
+			mra.roleid = r.id
+			LEFT JOIN
+			{user} u
+			on
+			u.id = mra.userid
+			where mra.contextid = $context->id
+			and r.shortname in ('teacher','editingteacher','coursecreator')
+			GROUP BY mra.userid";
+            $teachers = $DB->get_records_sql($sql);
+   
+    $course->teacher = $teachers;
 }
 
 echo json_encode($courses);die();
