@@ -64,7 +64,7 @@ foreach($courses as $course) {
 			and r.shortname in ('teacher','editingteacher','coursecreator')
 			GROUP BY mra.userid";
             $teachers = $DB->get_records_sql($sql);
-   
+
     $course->teacher = $teachers;
 }
 

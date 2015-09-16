@@ -225,5 +225,6 @@ if (!empty($user)) {
     }
 
 } else {
-    throw new moodle_exception('usernamenotfound', 'moodle');
+
+    throw new moodle_exception('wrongusernamepassword', 'moodle');
 }
