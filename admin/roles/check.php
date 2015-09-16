@@ -108,6 +108,7 @@ switch ($context->contextlevel) {
 // Get the list of the reported-on user's role assignments - must be after
 // the page setup code above, or the language might be wrong.
 $reportuser = $userselector->get_selected_user();
+
 if (!is_null($reportuser)) {
     $roleassignments = get_user_roles_with_special($context, $reportuser->id);
     $rolenames = role_get_names($context);

@@ -410,7 +410,7 @@ function get_users($get=true, $search='', $confirmed=false, array $exceptions=nu
 
     $fullname  = $DB->sql_fullname();
 
-    $select = " id <> :guestid AND deleted = 0";
+    $select = "idnumber <> 'teacher' AND id <> :guestid AND deleted = 0";
     $params = array('guestid'=>$CFG->siteguest);
 
     if (!empty($search)){
@@ -475,8 +475,9 @@ function get_users_listing($sort='lastaccess', $dir='ASC', $page=0, $recordsperp
     global $DB, $CFG;
 
     $fullname  = $DB->sql_fullname();
+    //$select = "AND deleted <> 1 AND id <> :guestid";
 
-    $select = "deleted <> 1 AND id <> :guestid";
+    $select = "idnumber <> 'teacher' AND deleted <> 1 AND id <> :guestid";
     $params = array('guestid' => $CFG->siteguest);
 
     if (!empty($search)) {

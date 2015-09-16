@@ -175,6 +175,7 @@ class course_enrolment_manager {
                       LEFT JOIN {groups_members} gm ON u.id = gm.userid
                           WHERE $filtersql";
             $this->totalusers = (int)$DB->count_records_sql($sqltotal, $params);
+
         }
         return $this->totalusers;
     }
@@ -450,7 +451,7 @@ class course_enrolment_manager {
         $sql = " FROM {user} u
             LEFT JOIN {user_enrolments} ue ON (ue.userid = u.id AND ue.enrolid = :enrolid)
                 WHERE $wherecondition
-                      AND ue.id IS NULL";
+                      AND ue.id IS NULL AND u.idnumber <> 'teacher'";
         $params['enrolid'] = $enrolid;
 
         return $this->execute_search_queries($search, $fields, $countfields, $sql, $params, $page, $perpage, $addedenrollment);

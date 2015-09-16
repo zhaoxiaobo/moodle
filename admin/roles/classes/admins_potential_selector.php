@@ -46,7 +46,7 @@ class core_role_admins_potential_selector extends user_selector_base {
     public function find_users($search) {
         global $CFG, $DB;
         list($wherecondition, $params) = $this->search_sql($search, '');
-
+        $wherecondition = $wherecondition." "."AND idnumber <> 'teacher' ";
         $fields      = 'SELECT ' . $this->required_fields_sql('');
         $countfields = 'SELECT COUNT(1)';
 

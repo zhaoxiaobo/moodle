@@ -59,8 +59,10 @@ class core_role_check_users_selector extends user_selector_base {
 
     public function find_users($search) {
         global $DB;
+        //var_dump($search);
 
         list($wherecondition, $params) = $this->search_sql($search, 'u');
+        $wherecondition = $wherecondition." AND u.idnumber <> 'teacher'";
 
         $fields      = 'SELECT ' . $this->required_fields_sql('u');
         $countfields = 'SELECT COUNT(1)';

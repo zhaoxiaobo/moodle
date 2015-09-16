@@ -24,9 +24,9 @@ function get_selection_data($ufiltering) {
     global $SESSION, $DB, $CFG;
 
     // get the SQL filter
-    list($sqlwhere, $params) = $ufiltering->get_sql_filter("id<>:exguest AND deleted <> 1", array('exguest'=>$CFG->siteguest));
+    list($sqlwhere, $params) = $ufiltering->get_sql_filter("id<>:exguest AND deleted <> 1 AND idnumber <> 'teacher'", array('exguest'=>$CFG->siteguest));
 
-    $total  = $DB->count_records_select('user', "id<>:exguest AND deleted <> 1", array('exguest'=>$CFG->siteguest));
+    $total  = $DB->count_records_select('user', "id<>:exguest AND deleted <> 1 AND idnumber <> 'teacher'", array('exguest'=>$CFG->siteguest));
     $acount = $DB->count_records_select('user', $sqlwhere, $params);
     $scount = count($SESSION->bulk_users);
 
