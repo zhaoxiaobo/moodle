@@ -279,7 +279,7 @@ function user_get_user_details($user, $course = null, array $userfields = array(
     if (!empty($course)) {
         $canviewuseremail = has_capability('moodle/course:useremail', $context);
     } else {
-        $canviewuseremail = false;
+        $canviewuseremail = true;
     }
     $cannotviewdescription   = !empty($CFG->profilesforenrolledusersonly) && !$currentuser && !$DB->record_exists('role_assignments', array('userid'=>$user->id));
     if (!empty($course)) {
