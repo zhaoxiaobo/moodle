@@ -290,7 +290,7 @@ function user_get_user_details($user, $course = null, array $userfields = array(
 
     if (!$currentuser && !$canviewdetailscap && !has_coursecontact_role($user->id)) {
         // skip this user details
-        return null;
+        //return null;
     }
 
     $userdetails = array();
