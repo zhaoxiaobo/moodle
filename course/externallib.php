@@ -272,6 +272,25 @@ class core_course_external extends external_api {
                                      WHERE d.forum = ?";
                             $module['numreplies'] = $DB->get_field_sql($sql, array($cm->instance));                            
                         }
+                        //add by zxb assign status
+                        if($cm->modname == "assign"){
+                            $sql = "SELECT d.status
+                                      FROM {assign_submission} d                                           
+                                     WHERE d.assignment = ? AND d.userid = ?";
+                            $assiginstatus = $DB->get_field_sql($sql, array($cm->instance, $USER->id));
+                            if($assiginstatus){
+                                $module['assiginstatus'] = "1";
+                                $sql = "SELECT d.grade
+                                      FROM {assign_grades} d                                           
+                                     WHERE d.assignment = ? AND d.userid = ?";
+                                $assigingrade = $DB->get_field_sql($sql, array($cm->instance, $USER->id));
+                                if($assigingrade && $assigingrade >= 0){
+                                    $module['assiginstatus'] = "2";
+                                }
+                            }else{
+                                $module['assiginstatus'] = "0";
+                            }
+                        }
                         // add by zxb report for study
                         $modname = 'view '.$cm->modname;
                         $sql = "SELECT d.time
@@ -387,6 +406,7 @@ class core_course_external extends external_api {
                                 'availability' => new external_value(PARAM_RAW, 'module availability settings', VALUE_OPTIONAL),
                                 'indent' => new external_value(PARAM_INT, 'number of identation in the site'),
                                 'numreplies' => new external_value(PARAM_RAW, 'Raw forum topic, will be used when type is forum', VALUE_OPTIONAL),
+                                'assiginstatus' => new external_value(PARAM_RAW, 'Raw assigin status, will be used when type is assigin', VALUE_OPTIONAL),
                                 'grade' => new external_value(PARAM_RAW, 'grade info , the value will be ‘-’ when mod has not grade'),
                                 'viewtime' => new external_value(PARAM_INT, 'Time learn'),
                                 'contents' => new external_multiple_structure(
