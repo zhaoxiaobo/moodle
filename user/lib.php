@@ -251,6 +251,9 @@ function user_get_user_details($user, $course = null, array $userfields = array(
         $userfields[] = 'id';
     }
 
+    if (!in_array('username', $userfields)) {
+        $userfields[] = 'username';
+    }
     if (!in_array('fullname', $userfields)) {
         $userfields[] = 'fullname';
     }
