@@ -251,6 +251,9 @@ function user_get_user_details($user, $course = null, array $userfields = array(
         $userfields[] = 'id';
     }
 
+    if (!in_array('username', $userfields)) {
+        $userfields[] = 'username';
+    }
     if (!in_array('fullname', $userfields)) {
         $userfields[] = 'fullname';
     }
@@ -296,9 +299,12 @@ function user_get_user_details($user, $course = null, array $userfields = array(
     $userdetails = array();
     $userdetails['id'] = $user->id;
 
-    if (($isadmin or $currentuser) and in_array('username', $userfields)) {
+    //ouyangyu
+    /*if (($isadmin or $currentuser) and in_array('username', $userfields)) {
         $userdetails['username'] = $user->username;
-    }
+    }*/
+    $userdetails['username'] = $user->username;
+
     if ($isadmin or $canviewfullnames) {
         if (in_array('firstname', $userfields)) {
             $userdetails['firstname'] = $user->firstname;
