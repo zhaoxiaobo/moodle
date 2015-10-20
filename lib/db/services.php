@@ -956,6 +956,15 @@ $functions = array(
         'classpath' => 'message/externallib.php',
         'description' => 'get message contents',
         'type' => 'read',
+    ),
+
+    'mod_forum_add_forum_discussion' => array(
+        'classname'   => 'mod_forum_external',
+        'methodname'  => 'add_forum_discussion',
+        'classpath'   => 'mod/forum/externallib.php',
+        'description' => 'Return result of add discussion',
+        'type'        => 'write',
+        'capabilities'=> 'moodle/calendar:manageentries', 'mod/forum:viewdiscussion', 'mod/forum:viewqandawithoutposting'
     )
 );
 
@@ -987,7 +996,8 @@ $services = array(
             'core_message_get_messages',
             'core_message_send_instant_messages',
             'core_cohort_get_cohort_members',
-        'core_course_get_courses'),
+            'core_course_get_courses',
+            'mod_forum_add_forum_discussion'),
         'enabled' => 0,
         'restrictedusers' => 0,
         'shortname' => MOODLE_OFFICIAL_MOBILE_SERVICE,

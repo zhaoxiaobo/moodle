@@ -634,6 +634,9 @@ class mod_forum_external extends external_api {
         if(!$discussion_data){
             throw new moodle_exception('discussion id is not exit', 'error');
         }
+        if($parent == "0"){
+            throw new moodle_exception('creating a level of recovery information is not allowed', 'error');
+        }
         $forum  = $DB->get_record('forum', array('id' => $discussion_data->forum));
         $cm         = get_coursemodule_from_instance('forum', $forum->id);
         // $context    = context_module::instance($cm->id);
@@ -677,6 +680,104 @@ class mod_forum_external extends external_api {
      * @since Moodle 2.7
      */
     public static function add_forum_discussion_posts_returns() {
+        return new external_single_structure(            
+            array(
+                'result' => new external_value(PARAM_RAW, 'resulet of chek code')                
+            ) 
+        ); 
+    }
+
+        /**
+     * Describes the parameters for add_forum_discussion.
+     *
+     * @return external_external_function_parameters
+     * @since Moodle 2.6
+     */
+    public static function add_forum_discussion_parameters() {
+        return new external_function_parameters (
+            array(
+                'subject' => new external_value(PARAM_TEXT, 'The discussion subject'),
+                'message' => new external_value(PARAM_RAW, 'The discussion message'),
+                'forum' => new external_value(PARAM_INT, 'forum id')
+            )
+        );
+    }
+
+    /**
+     * Returns the results of add forum discussion posts
+     *
+     * @param int $discussionid the post ids
+     * @param string $sortby sort by this element (id, created or modified)
+     * @param string $sortdirection sort direction: ASC or DESC
+     *
+     * @return array the forum post details
+     * @since Moodle 2.6
+     */
+    public static function add_forum_discussion($subject, $message, $forum) {
+        global $CFG, $DB, $USER;
+        require_once($CFG->dirroot."/mod/forum/lib.php");
+
+        // Validate the parameter.
+        $params = self::validate_parameters(self::add_forum_discussion_parameters(),
+            array(
+                'subject' => $subject,
+                'message' => $message,
+                'forum' => $forum));
+
+        //根据discussion获取相关数据，并进行校验
+        $forum = $DB->get_record('forum', array('id' => $forum));
+        if(!$forum){
+            throw new moodle_exception('forum id is not exit', 'error');
+        }
+        $cm         = get_coursemodule_from_instance('forum', $forum->id);
+        // $context    = context_module::instance($cm->id);
+        // $post->message = file_save_draft_area_files($post->itemid, $context->id, 'mod_forum', 'post', $post->id,
+        //     mod_forum_post_form::editor_options($context, null), $post->message);
+        // $DB->set_field('forum_posts', 'message', $post->message, array('id'=>$post->id));
+        // forum_add_attachment($post, $forum, $cm, $mform, $message);
+        $discussion = new stdClass();
+        $discussion->course = $forum->course;
+        $discussion->forum = $forum->id;
+        $discussion->name = $subject;
+        $discussion->userid = $USER->id;
+        $discussion->timemodified = time();
+        $discussion->usermodified = time();
+        $discussion->id = $DB->insert_record("forum_discussions", $discussion);
+
+
+
+        $post = new stdClass();        
+        $post->subject     = $subject;
+        $post->message     = $message;
+        $post->subscribe   = "1";        
+        $post->discussion  = $discussion->id;
+        $post->userid      = $USER->id;
+        $post->created     = $post->modified = time();
+        $post->mailed      = "0";
+        $post->messageformat = "1";        
+        $post->attachment  = "";        
+        $post->id = $DB->insert_record("forum_posts", $post);        
+        $DB->set_field("forum_discussions", "firstpost", $post->id, array("id" => $discussion->id));        
+
+        if (forum_tp_can_track_forums($forum) && forum_tp_is_tracked($forum)) {
+            forum_tp_mark_post_read($post->userid, $post, $post->forum);
+        }
+
+        // Let Moodle know that assessable content is uploaded (eg for plagiarism detection)
+        forum_trigger_content_uploaded_event($post, $cm, 'forum_add_new_discussions');
+
+        $result=array();
+        $result["result"]='true';
+        return $result;
+    }
+
+    /**
+     * Describes the add_forum_discussion return value.
+     *
+     * @return external_single_structure
+     * @since Moodle 2.7
+     */
+    public static function add_forum_discussion_returns() {
         return new external_single_structure(            
             array(
                 'result' => new external_value(PARAM_RAW, 'resulet of chek code')                
