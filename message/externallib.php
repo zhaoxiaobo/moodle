@@ -750,7 +750,6 @@ class core_message_external extends external_api {
             'messages' => $messages,
             'warnings' => $warnings
         );
-
         return $results;
     }
 
@@ -844,6 +843,23 @@ function message_get_messages($useridto, $useridfrom = 0, $notifications = -1, $
              ORDER BY $sort";
 
     $messages = $DB->get_records_sql($sql, $params, $limitfrom, $limitnum);
+    foreach($messages as $key=>$value){
+        $post = new stdClass();        
+        $post->useridfrom     = $value->useridfrom;
+        $post->useridto     = $value->useridto;
+        $post->subject   = $value->subject;        
+        $post->fullmessage  = $value->fullmessage;        
+        $post->fullmessageformat      = $value->fullmessageformat;
+        $post->fullmessagehtml      = $value->fullmessagehtml;
+        $post->smallmessage     = $value->smallmessage;
+        $post->notification      = $value->notification;
+        $post->contexturl = "";        
+        $post->contexturlname  = "";
+        $post->timecreated = time();        
+        $post->timeread  = time();
+        $DB->insert_record("message_read", $post);
+        $DB->delete_records('message', array('id' => $value->id));
+    }
     return $messages;
 }
 }
