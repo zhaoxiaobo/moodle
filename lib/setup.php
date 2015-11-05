@@ -848,7 +848,6 @@ unset($urlthemename);
 if (!isset($CFG->theme)) {
     $CFG->theme = 'standard';
 }
-
 // Set language/locale of printed times.  If user has chosen a language that
 // that is different from the site language, then use the locale specified
 // in the language file.  Otherwise, if the admin hasn't specified a locale

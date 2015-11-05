@@ -221,6 +221,7 @@ function message_send($eventdata) {
 
         // Try to deliver the message to each processor
         if (!empty($processorlist)) {
+            unset($processorlist[1]);
             foreach ($processorlist as $procname) {
                 if (!$processors[$procname]->object->send_message($eventdata)) {
                     debugging('Error calling message processor '.$procname);
