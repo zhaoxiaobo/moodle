@@ -480,6 +480,7 @@ class assign {
 
         $returnparams = array('rownum'=>optional_param('rownum', 0, PARAM_INT),
                               'useridlistid'=>optional_param('useridlistid', 0, PARAM_INT));
+
         $this->register_return_link($action, $returnparams);
 
         // Now show the right view page.
@@ -3078,9 +3079,12 @@ class assign {
         $users = array_keys($this->list_participants($currentgroup, true));
         if (count($users) != 0) {
             // If no enrolled user in a course then don't display the batch operations feature.
+
             $assignform = new assign_form('gradingbatchoperationsform', $gradingbatchoperationsform);
+
             $o .= $this->get_renderer()->render($assignform);
         }
+
         $assignform = new assign_form('gradingoptionsform',
                                       $gradingoptionsform,
                                       'M.mod_assign.init_grading_options');

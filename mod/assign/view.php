@@ -46,6 +46,7 @@ require_capability('mod/assign:view', $context);
 $assign = new assign($context, $cm, $course);
 
 $completion=new completion_info($course);
+
 $completion->set_module_viewed($cm);
 
 // Get the assign class to
